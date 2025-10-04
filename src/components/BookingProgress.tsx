@@ -2,21 +2,26 @@ import { Check } from "lucide-react";
 
 interface BookingProgressProps {
   currentStep: number;
+  totalSteps?: number;
 }
 
 const steps = [
   { id: 1, label: "วันที่" },
-  { id: 2, label: "จำนวน" },
-  { id: 3, label: "ข้อมูล" },
-  { id: 4, label: "ชำระเงิน" },
+  { id: 2, label: "รอบเวลา" },
+  { id: 3, label: "จำนวนคน" },
+  { id: 4, label: "ข้อมูลสมาชิก" },
+  { id: 5, label: "ชำระเงิน" },
 ];
 
-export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
+export const BookingProgress = ({ currentStep, totalSteps = 5 }: BookingProgressProps) => {
+  // ใช้ steps ตามจำนวนที่กำหนด
+  const displaySteps = steps.slice(0, totalSteps);
+
   return (
     <div className="mb-8 sm:mb-10 md:mb-12 w-full">
       <div className="flex items-center justify-center w-full px-2 sm:px-4">
-        <div className="flex items-center justify-between w-full max-w-md sm:max-w-lg">
-          {steps.map((step, index) => {
+        <div className="flex items-center justify-between w-full max-w-2xl">
+          {displaySteps.map((step, index) => {
             const isCompleted = currentStep > step.id;
             const isCurrent = currentStep === step.id;
 
@@ -49,8 +54,8 @@ export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
 
                   <span
                     className={`
-                      mt-1.5 sm:mt-2 text-xs sm:text-sm font-medium text-center whitespace-nowrap
-                      transition-colors duration-300
+                      mt-1.5 sm:mt-2 text-xs sm:text-sm font-medium text-center
+                      transition-colors duration-300 max-w-[60px] sm:max-w-none
                       ${
                         isCurrent
                           ? "text-primary font-bold"
@@ -60,12 +65,20 @@ export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
                       }
                     `}
                   >
-                    {step.label}
+                    {/* แสดงแบบย่อบนมือถือ */}
+                    <span className="hidden sm:inline">{step.label}</span>
+                    <span className="inline sm:hidden">
+                      {step.id === 1 && "วันที่"}
+                      {step.id === 2 && "รอบ"}
+                      {step.id === 3 && "จำนวน"}
+                      {step.id === 4 && "ข้อมูล"}
+                      {step.id === 5 && "ชำระ"}
+                    </span>
                   </span>
                 </div>
 
-                {index < steps.length - 1 && (
-                  <div className="w-8 sm:w-12 md:w-16 h-0.5 mx-1.5 sm:mx-2 -mt-6 flex-shrink-0">
+                {index < displaySteps.length - 1 && (
+                  <div className="w-6 sm:w-10 md:w-14 h-0.5 mx-1 sm:mx-1.5 -mt-6 flex-shrink-0">
                     <div className="h-full bg-border rounded-full overflow-hidden">
                       <div
                         className={`h-full bg-primary transition-all duration-500 ${
