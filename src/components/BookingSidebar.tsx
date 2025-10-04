@@ -97,7 +97,7 @@ export const BookingSidebar = ({
             <div>
               <div className="text-sm text-muted-foreground">วันที่</div>
               <div className="font-semibold">{dateLabels[selectedDate]}</div>
-              <div className="text-sm text-muted-foreground">18:00 - 23:00 น.</div>
+              <div className="text-sm text-muted-foreground">10:00 - 17:00 น.</div>
             </div>
           </div>
 

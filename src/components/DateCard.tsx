@@ -63,7 +63,7 @@ export const DateCard = ({ date, dayName, month, year, availableSlots, status, d
 
       <div className="flex items-center justify-center gap-2 mb-2 text-muted-foreground">
         <Calendar className="w-4 h-4" />
-        <span className="text-sm">18:00 - 23:00 น.</span>
+        <span className="text-sm">10:00 - 17:00 น.</span>
       </div>
 
       <div className="flex items-center justify-center gap-2 mb-4 text-muted-foreground">

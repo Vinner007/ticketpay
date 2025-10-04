@@ -136,7 +136,7 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">เวลา</div>
-              <div className="font-semibold">18:00 - 23:00 น.</div>
+              <div className="font-semibold">10:00 - 17:00 น.</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">สถานที่</div>
