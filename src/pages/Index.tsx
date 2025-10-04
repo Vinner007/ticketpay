@@ -170,7 +170,7 @@ const Index = () => {
               เลือกวันที่เข้าร่วม
             </h2>
             <p className="text-xl text-muted-foreground">
-              เวลา 18:00 - 23:00 น. ที่ Haunted Arena, กรุงเทพฯ
+              เวลา 09:30 - 17:00 น. ที่ ตึก4,มหาวิทยาลัยศรีปทุม กรุงเทพฯ
             </p>
           </div>
 
