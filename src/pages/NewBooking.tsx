@@ -831,61 +831,60 @@ const NewBooking = () => {
       </div>
 
       {/* Rules Dialog */}
-      <AlertDialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
-        <AlertDialogContent className="max-w-[90vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl sm:text-2xl text-primary">
-              📌 กติกาสำคัญ
-            </AlertDialogTitle>
-          </AlertDialogHeader>
-          <div className="space-y-4 text-sm sm:text-base">
-            <div className="space-y-2">
-              <p className="font-semibold">วันจัดงาน:</p>
-              <p>29 – 31 ตุลาคม 2568</p>
-            </div>
-            
-            <div className="space-y-2">
-              <p className="font-semibold">สถานที่:</p>
-              <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
-            </div>
+<AlertDialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+  <AlertDialogContent className="max-w-[90vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+    <AlertDialogHeader>
+      <AlertDialogTitle className="text-xl sm:text-2xl text-primary">
+        📌 กติกาสำคัญ
+      </AlertDialogTitle>
+    </AlertDialogHeader>
+    <div className="space-y-4 text-sm sm:text-base">
+      <div className="space-y-2">
+        <p className="font-semibold">วันจัดงาน:</p>
+        <p>29 – 31 ตุลาคม 2568</p>
+      </div>
+      
+      <div className="space-y-2">
+        <p className="font-semibold">สถานที่:</p>
+        <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
+      </div>
 
-            <div className="space-y-2">
-              <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
-              <ul className="list-disc list-inside space-y-1 pl-2">
-                <li>ผู้เข้าร่วมต้องแสดงบัตร + ลงทะเบียนหน้างานก่อนเข้า</li>
-                <li><strong>มาก่อนเวลา 30 นาที</strong> เพื่อเข้าคิวรอบของตัวเอง</li>
-                <li><strong className="text-destructive">มาสาย ไม่คืนเงิน และไม่สามารถเปลี่ยนรอบได้</strong></li>
-                <li>ของมีค่าฝากไว้จุดรับฝาก ห้ามนำเข้าบ้านผีสิง</li>
-                <li><strong>ห้ามนำโทรศัพท์เข้าไปในงาน</strong> มีจุดรับฝาก</li>
-                <li>ทีมงานขอสงวนสิทธิ์ในการปรับรอบ หากมีเหตุจำเป็น</li>
-              </ul>
-            </div>
+      <div className="space-y-2">
+        <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
+        <ul className="list-decimal list-inside space-y-2 pl-2">
+          <li>กรุณามาถึงก่อนเวลา 30 นาที เพื่อลงทะเบียนและเลือกรอบในการเล่น</li>
+          <li>แสดง QR code/บัตร ที่จุดลงทะเบียน</li>
+          <li>บัตรที่ซื้อมีผลเฉพาะวันที่เลือกไว้เท่านั้น</li>
+          <li className="text-destructive font-semibold">หากไม่มาตามวันที่เลือก ทางทีมงานจะถือว่าสละสิทธิ์และไม่มีการคืนเงิน</li>
+          <li>ผู้เข้าร่วมทุกท่านที่ <strong>แต่งหน้าแต่งกายธีมผี/แฟนซีฮาโลวีน</strong> สามารถเข้าร่วมรับรางวัลได้</li>
+        </ul>
+      </div>
 
-            <div className="space-y-2 bg-primary/10 p-3 rounded-lg">
-              <p className="font-semibold text-primary">🎉 โปรโมชั่นพิเศษ:</p>
-              <p><strong>20 ทีม มา 7 จ่าย 6</strong> (ฟรี 1 คน)</p>
-              <p className="text-sm">ใช้โค้ด: <code className="bg-background px-2 py-1 rounded">GROUP7FOR6</code></p>
-            </div>
+      <div className="space-y-2 bg-primary/10 p-3 rounded-lg">
+        <p className="font-semibold text-primary">🎉 โปรโมชั่นพิเศษ:</p>
+        <p><strong>20 ทีม มา 7 จ่าย 6</strong> (ฟรี 1 คน)</p>
+        <p className="text-sm">ใช้โค้ด: <code className="bg-background px-2 py-1 rounded">GROUP7FOR6</code></p>
+      </div>
 
-            <div className="space-y-2 bg-secondary/10 p-3 rounded-lg">
-              <p className="font-semibold">🎭 พิเศษ!</p>
-              <p>แต่งตัว + แต่งหน้า Theme ฮาโลวีน = รับ Gift Voucher</p>
-            </div>
+      <div className="space-y-2 bg-secondary/10 p-3 rounded-lg">
+        <p className="font-semibold">🎭 พิเศษ!</p>
+        <p>แต่งตัว + แต่งหน้า Theme ฮาโลวีน = รับ Gift Voucher</p>
+      </div>
 
-            <div className="space-y-2">
-              <p className="font-semibold">เวลาดำเนินงาน:</p>
-              <p>• เริ่มลงทะเบียน 09:30 น.</p>
-              <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
-              <p>• รอบละ 10 นาที</p>
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowRulesDialog(false)}>
-              เข้าใจแล้ว
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <div className="space-y-2">
+        <p className="font-semibold">เวลาดำเนินงาน:</p>
+        <p>• เริ่มลงทะเบียน 09:30 น.</p>
+        <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
+        <p>• รอบละ 10 นาที</p>
+      </div>
+    </div>
+    <AlertDialogFooter>
+      <AlertDialogAction onClick={() => setShowRulesDialog(false)}>
+        เข้าใจแล้ว
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
