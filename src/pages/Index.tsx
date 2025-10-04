@@ -292,7 +292,7 @@ const Index = () => {
             </div>
           </div>
           <div className="text-center text-muted-foreground border-t border-border pt-8">
-            <p>&copy; 2025 cxntrolx . All rights reserved.</p>
+            <p>&copy; 2025 Cxntrolx . All rights reserved.</p>
           </div>
         </div>
       </footer>
