@@ -52,32 +52,71 @@ export const MemberForm = ({
       {/* Leader Section */}
       <div className="bg-card rounded-xl p-4 sm:p-6 border-2 border-primary glow-orange">
         <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-          <span>👤</span> หัวหน้าทีม (Leader)
+          <span>👤</span> หัวหน้ากลุ่ม (Leader)
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-          <div className="md:col-span-2">
-            <Label htmlFor="leader-name" className="text-sm sm:text-base">
-              ชื่อ-นามสกุล <span className="text-destructive">*</span>
+          {/* ชื่อ */}
+          <div>
+            <Label htmlFor="leader-firstName" className="text-sm sm:text-base">
+              ชื่อ <span className="text-destructive">*</span>
             </Label>
             <Input
-              id="leader-name"
-              value={leader.name}
-              onChange={(e) => onLeaderChange({ ...leader, name: e.target.value })}
-              placeholder="กรอกชื่อ-นามสกุล"
+              id="leader-firstName"
+              value={leader.firstName || ""}
+              onChange={(e) => onLeaderChange({ ...leader, firstName: e.target.value })}
+              placeholder="ชื่อจริง"
               className={`mt-1.5 sm:mt-2 border-2 focus:border-primary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base ${
-                errors?.leader?.name ? "border-destructive" : "border-input"
+                errors?.leader?.firstName ? "border-destructive" : "border-input"
               }`}
               required
             />
-            {errors?.leader?.name && (
+            {errors?.leader?.firstName && (
               <div className="flex items-center gap-1 mt-1 text-xs sm:text-sm text-destructive">
                 <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{errors.leader.name}</span>
+                <span>{errors.leader.firstName}</span>
               </div>
             )}
           </div>
 
+          {/* นามสกุล */}
+          <div>
+            <Label htmlFor="leader-lastName" className="text-sm sm:text-base">
+              นามสกุล <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="leader-lastName"
+              value={leader.lastName || ""}
+              onChange={(e) => onLeaderChange({ ...leader, lastName: e.target.value })}
+              placeholder="นามสกุล"
+              className={`mt-1.5 sm:mt-2 border-2 focus:border-primary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base ${
+                errors?.leader?.lastName ? "border-destructive" : "border-input"
+              }`}
+              required
+            />
+            {errors?.leader?.lastName && (
+              <div className="flex items-center gap-1 mt-1 text-xs sm:text-sm text-destructive">
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{errors.leader.lastName}</span>
+              </div>
+            )}
+          </div>
+
+          {/* นามแฝง */}
+          <div>
+            <Label htmlFor="leader-nickname" className="text-sm sm:text-base">
+              นามแฝง (ชื่อเล่น)
+            </Label>
+            <Input
+              id="leader-nickname"
+              value={leader.nickname || ""}
+              onChange={(e) => onLeaderChange({ ...leader, nickname: e.target.value })}
+              placeholder="ชื่อเล่น"
+              className="mt-1.5 sm:mt-2 border-2 border-input focus:border-primary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+            />
+          </div>
+
+          {/* อีเมล */}
           <div>
             <Label htmlFor="leader-email" className="text-sm sm:text-base">
               อีเมล <span className="text-destructive">*</span>
@@ -101,6 +140,7 @@ export const MemberForm = ({
             )}
           </div>
 
+          {/* เบอร์โทรศัพท์ */}
           <div>
             <Label htmlFor="leader-phone" className="text-sm sm:text-base">
               เบอร์โทรศัพท์ <span className="text-destructive">*</span>
@@ -124,6 +164,7 @@ export const MemberForm = ({
             )}
           </div>
 
+          {/* อายุ */}
           <div>
             <Label htmlFor="leader-age" className="text-sm sm:text-base">
               อายุ <span className="text-destructive">*</span>
@@ -151,6 +192,7 @@ export const MemberForm = ({
             )}
           </div>
 
+          {/* Line ID */}
           <div>
             <Label htmlFor="leader-line" className="text-sm sm:text-base">
               Line ID (ถ้ามี)
@@ -170,7 +212,7 @@ export const MemberForm = ({
       {members.length > 0 && (
         <div>
           <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-            <span>👥</span> สมาชิกในทีม ({members.length} คน)
+            <span>👥</span> สมาชิกในกลุ่ม ({members.length} คน)
           </h3>
 
           <div className="space-y-3 sm:space-y-4">
@@ -188,33 +230,78 @@ export const MemberForm = ({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <Label htmlFor={`member-${member.id}-name`} className="text-sm sm:text-base">
-                      ชื่อ-นามสกุล <span className="text-destructive">*</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {/* ชื่อ */}
+                  <div>
+                    <Label htmlFor={`member-${member.id}-firstName`} className="text-sm sm:text-base">
+                      ชื่อ <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id={`member-${member.id}-name`}
-                      value={member.name}
+                      id={`member-${member.id}-firstName`}
+                      value={member.firstName || ""}
                       onChange={(e) =>
-                        handleMemberChange(member.id, "name", e.target.value)
+                        handleMemberChange(member.id, "firstName", e.target.value)
                       }
-                      placeholder="กรอกชื่อ-นามสกุล"
+                      placeholder="ชื่อจริง"
                       className={`mt-1.5 sm:mt-2 border-2 focus:border-secondary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base ${
-                        errors?.members?.[index]?.name
+                        errors?.members?.[index]?.firstName
                           ? "border-destructive"
                           : "border-input"
                       }`}
                       required
                     />
-                    {errors?.members?.[index]?.name && (
+                    {errors?.members?.[index]?.firstName && (
                       <div className="flex items-center gap-1 mt-1 text-xs sm:text-sm text-destructive">
                         <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>{errors.members[index].name}</span>
+                        <span>{errors.members[index].firstName}</span>
                       </div>
                     )}
                   </div>
 
+                  {/* นามสกุล */}
+                  <div>
+                    <Label htmlFor={`member-${member.id}-lastName`} className="text-sm sm:text-base">
+                      นามสกุล <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id={`member-${member.id}-lastName`}
+                      value={member.lastName || ""}
+                      onChange={(e) =>
+                        handleMemberChange(member.id, "lastName", e.target.value)
+                      }
+                      placeholder="นามสกุล"
+                      className={`mt-1.5 sm:mt-2 border-2 focus:border-secondary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base ${
+                        errors?.members?.[index]?.lastName
+                          ? "border-destructive"
+                          : "border-input"
+                      }`}
+                      required
+                    />
+                    {errors?.members?.[index]?.lastName && (
+                      <div className="flex items-center gap-1 mt-1 text-xs sm:text-sm text-destructive">
+                        <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{errors.members[index].lastName}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* นามแฝง */}
+                  <div>
+                    <Label htmlFor={`member-${member.id}-nickname`} className="text-sm sm:text-base">
+                      นามแฝง (ชื่อเล่น)
+                    </Label>
+                    <Input
+                      id={`member-${member.id}-nickname`}
+                      value={member.nickname || ""}
+                      onChange={(e) =>
+                        handleMemberChange(member.id, "nickname", e.target.value)
+                      }
+                      placeholder="ชื่อเล่น"
+                      className="mt-1.5 sm:mt-2 border-2 border-input focus:border-secondary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+                    />
+                  </div>
+
+                  {/* อายุ */}
                   <div>
                     <Label htmlFor={`member-${member.id}-age`} className="text-sm sm:text-base">
                       อายุ <span className="text-destructive">*</span>
@@ -246,26 +333,6 @@ export const MemberForm = ({
                         <span>{errors.members[index].age}</span>
                       </div>
                     )}
-                  </div>
-
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <Label htmlFor={`member-${member.id}-emergency`} className="text-sm sm:text-base">
-                      เบอร์ฉุกเฉิน (ถ้ามี)
-                    </Label>
-                    <Input
-                      id={`member-${member.id}-emergency`}
-                      type="tel"
-                      value={member.emergencyContact || ""}
-                      onChange={(e) =>
-                        handleMemberChange(
-                          member.id,
-                          "emergencyContact",
-                          e.target.value
-                        )
-                      }
-                      placeholder="0XX-XXX-XXXX"
-                      className="mt-1.5 sm:mt-2 border-2 border-input focus:border-secondary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
-                    />
                   </div>
                 </div>
               </div>
