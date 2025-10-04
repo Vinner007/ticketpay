@@ -14,13 +14,16 @@ export interface PromoCode {
 
 export interface Member {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
   age: number;
-  emergencyContact?: string;
 }
 
 export interface Leader {
-  name: string;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
   email: string;
   phone: string;
   age: number;
@@ -31,6 +34,8 @@ export interface Booking {
   bookingId: string;
   confirmationCode: string;
   eventDate: string;
+  timeSlot: string;
+  timeSlotTime: string;
   groupSize: number;
   ticketPrice: number;
   subtotal: number;
@@ -44,6 +49,7 @@ export interface Booking {
   paymentMethod: "credit-card" | "promptpay" | "bank-transfer";
   paymentStatus: "pending" | "completed" | "failed";
   qrCodeData: string;
+  bookingDate: string;
 }
 
 export const PROMO_CODES: PromoCode[] = [
