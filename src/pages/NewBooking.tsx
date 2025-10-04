@@ -25,7 +25,7 @@ import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 
 const TICKET_PRICE = 80;
-const PAYMENT_TIME_LIMIT = 15 * 60; // 15 minutes in seconds
+const PAYMENT_TIME_LIMIT = 15 * 60;
 
 const PROMO_CODES = [
   {
@@ -93,22 +93,18 @@ const NewBooking = () => {
     lineId: "",
   });
   const [members, setMembers] = useState<Member[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState
-    "credit-card" | "promptpay" | "bank-transfer"
-  >("promptpay");
+  const [paymentMethod, setPaymentMethod] = useState<"credit-card" | "promptpay" | "bank-transfer">("promptpay");
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(PAYMENT_TIME_LIMIT);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
 
-  // Validation errors
   const [errors, setErrors] = useState<{
     leader?: { [key: string]: string };
     members?: { [key: number]: { [key: string]: string } };
   }>({});
 
-  // Calculate subtotal and total with memoization
   const subtotal = useMemo(() => {
     return groupSize * TICKET_PRICE;
   }, [groupSize]);
@@ -117,7 +113,6 @@ const NewBooking = () => {
     return subtotal - (appliedPromo?.discount || 0);
   }, [subtotal, appliedPromo]);
 
-  // Load draft on mount
   useEffect(() => {
     const draft = localStorage.getItem("booking_draft");
     if (draft) {
@@ -130,7 +125,6 @@ const NewBooking = () => {
     }
   }, []);
 
-  // Auto-save draft
   useEffect(() => {
     if (currentStep > 1 && currentStep < 5) {
       const draftData = {
@@ -155,7 +149,6 @@ const NewBooking = () => {
     paymentMethod,
   ]);
 
-  // Generate members array based on group size
   useEffect(() => {
     if (groupSize > 0) {
       const requiredMembers = groupSize - 1;
@@ -169,7 +162,6 @@ const NewBooking = () => {
     }
   }, [groupSize]);
 
-  // Payment timer
   useEffect(() => {
     if (currentStep === 4 && timeRemaining > 0) {
       const timer = setInterval(() => {
@@ -187,14 +179,12 @@ const NewBooking = () => {
     }
   }, [currentStep, timeRemaining, navigate]);
 
-  // Reset timer when entering payment step
   useEffect(() => {
     if (currentStep === 4) {
       setTimeRemaining(PAYMENT_TIME_LIMIT);
     }
   }, [currentStep]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === "Escape" && currentStep > 1 && currentStep < 5) {
