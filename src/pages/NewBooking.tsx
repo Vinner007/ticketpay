@@ -440,28 +440,28 @@ const NewBooking = () => {
   );
 
   return (
-    <div className="relative min-h-screen py-20">
+    <div className="relative min-h-screen py-12 sm:py-16 md:py-20">
       <AnimatedBats />
       <SpiderWeb position="top-left" />
       <SpiderWeb position="top-right" />
 
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 max-w-7xl">
         {showDraftBanner && currentStep === 1 && (
-          <Card className="mb-6 p-4 bg-primary/10 border-primary">
-            <div className="flex items-center justify-between flex-wrap gap-4">
+          <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/10 border-primary">
+            <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
               <div>
-                <p className="font-semibold text-primary">
+                <p className="font-semibold text-primary text-sm sm:text-base">
                   พบแบบร่างที่บันทึกไว้
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   ต้องการกลับมาทำรายการต่อหรือไม่?
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   onClick={handleRestoreDraft}
                   size="sm"
-                  className="bg-primary hover:bg-primary/90"
+                  className="flex-1 sm:flex-none bg-primary hover:bg-primary/90"
                 >
                   โหลดแบบร่าง
                 </Button>
@@ -469,6 +469,7 @@ const NewBooking = () => {
                   onClick={handleClearDraft}
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                 >
                   เริ่มใหม่
                 </Button>
@@ -482,14 +483,14 @@ const NewBooking = () => {
             <Button
               onClick={handleDateChange}
               variant="outline"
-              className="mb-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground min-h-[48px]"
+              className="mb-6 sm:mb-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground min-h-[44px] sm:min-h-[48px]"
             >
               <ArrowLeft className="mr-2 w-4 h-4" />
               กลับหน้าหลัก
             </Button>
 
-            <div className="text-center mb-12">
-              <h1 className="text-5xl md:text-6xl mb-4 text-primary text-glow-orange font-spooky">
+            <div className="text-center mb-8 sm:mb-10 md:mb-12">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 text-primary text-glow-orange font-spooky leading-tight px-2">
                 จองตั๋วของคุณ
               </h1>
             </div>
@@ -501,49 +502,49 @@ const NewBooking = () => {
         {currentStep === 5 && booking ? (
           <ConfirmationSuccess booking={booking} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2">
-              <Card className="p-8 bg-card border-2 border-border shadow-card">
+              <Card className="p-4 sm:p-6 md:p-8 bg-card border-2 border-border shadow-card">
                 {currentStep === 1 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Calendar className="w-8 h-8 text-primary" />
-                      <h2 className="text-3xl font-spooky text-primary">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <Calendar className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-spooky text-primary">
                         เลือกวันที่
                       </h2>
                     </div>
 
-                    <div className="bg-primary/10 border-2 border-primary rounded-xl p-8 text-center">
-                      <div className="text-4xl md:text-6xl font-spooky text-primary mb-4">
+                    <div className="bg-primary/10 border-2 border-primary rounded-xl p-4 sm:p-6 md:p-8 text-center">
+                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-spooky text-primary mb-3 sm:mb-4 leading-tight px-2">
                         {dateLabels[selectedDate]}
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-lg md:text-xl text-muted-foreground mb-2">
-                        <Calendar className="w-5 h-5" />
+                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground mb-2">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span>18:00 - 23:00 น.</span>
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-lg md:text-xl text-muted-foreground">
-                        <MapPin className="w-5 h-5" />
+                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground">
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span>Haunted Arena, กรุงเทพฯ</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       <Button
                         onClick={() => navigate("/")}
                         variant="outline"
-                        className="flex-1 border-2 border-secondary text-secondary hover:bg-secondary/10 min-h-[48px]"
+                        className="flex-1 border-2 border-secondary text-secondary hover:bg-secondary/10 min-h-[48px] text-base"
                       >
                         เปลี่ยนวันที่
                       </Button>
                       <Button
                         onClick={() => setCurrentStep(2)}
-                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px] text-lg"
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px] text-base sm:text-lg"
                       >
                         ยืนยันและเลือกจำนวนคน →
                       </Button>
                     </div>
 
-                    <p className="text-center text-sm text-muted-foreground mt-4">
+                    <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 px-4 hidden sm:block">
                       💡 เคล็ดลับ: กด Ctrl+Enter เพื่อไปขั้นตอนถัดไป
                     </p>
                   </div>
@@ -570,12 +571,12 @@ const NewBooking = () => {
 
                 {currentStep === 4 && (
                   <div className="space-y-6">
-                    <div className="text-center p-4 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">
+                    <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">
                         ⏰ กรุณาชำระเงินภายใน
                       </p>
                       <div
-                        className={`text-3xl font-bold ${
+                        className={`text-2xl sm:text-3xl font-bold ${
                           timeRemaining < 300
                             ? "text-destructive animate-pulse"
                             : "text-primary"
@@ -584,7 +585,7 @@ const NewBooking = () => {
                         {formatTime(timeRemaining)} นาที
                       </div>
                       {timeRemaining < 300 && (
-                        <p className="text-sm text-destructive mt-1">
+                        <p className="text-xs sm:text-sm text-destructive mt-1">
                           ⚠️ เหลือเวลาน้อย!
                         </p>
                       )}
@@ -600,11 +601,11 @@ const NewBooking = () => {
                 )}
 
                 {currentStep < 4 && currentStep > 1 && (
-                  <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
                     <Button
                       onClick={() => setCurrentStep((prev) => prev - 1)}
                       variant="outline"
-                      className="w-full py-6 text-lg border-2 border-border min-h-[48px]"
+                      className="w-full py-5 sm:py-6 text-base sm:text-lg border-2 border-border min-h-[48px]"
                     >
                       ← ย้อนกลับ
                     </Button>
@@ -612,7 +613,7 @@ const NewBooking = () => {
                       <Button
                         onClick={handleGroupSizeNext}
                         disabled={!canProceedFromStep1}
-                        className="w-full py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
                       >
                         ถัดไป →
                       </Button>
@@ -621,7 +622,7 @@ const NewBooking = () => {
                       <Button
                         onClick={handleMemberFormNext}
                         disabled={!canProceedFromStep3}
-                        className="w-full py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
                       >
                         ไปหน้าชำระเงิน →
                       </Button>
@@ -659,49 +660,49 @@ const NewBooking = () => {
             {currentStep === 4 && (
               <div className="lg:col-span-1">
                 <div className="sticky top-6">
-                  <Card className="p-6 bg-card border-2 border-primary glow-orange">
-                    <h3 className="text-2xl font-spooky text-primary mb-6">
+                  <Card className="p-4 sm:p-6 bg-card border-2 border-primary glow-orange">
+                    <h3 className="text-xl sm:text-2xl font-spooky text-primary mb-4 sm:mb-6">
                       สรุปคำสั่งซื้อ
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="bg-muted p-4 rounded-lg space-y-2">
-                        <div className="flex justify-between">
+                      <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-muted-foreground">วันที่:</span>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-right">
                             {dateLabels[selectedDate].split("(")[0]}
                           </span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-muted-foreground">
                             จำนวนคน:
                           </span>
                           <span className="font-semibold">{groupSize} คน</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-muted-foreground">
                             หัวหน้ากลุ่ม:
                           </span>
-                          <span className="font-semibold">{leader.name}</span>
+                          <span className="font-semibold text-right">{leader.name}</span>
                         </div>
                       </div>
 
                       <div className="border-t border-border pt-4 space-y-2">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-sm sm:text-base">
                           <span>ยอดรวม</span>
                           <span className="font-semibold">
                             {subtotal.toLocaleString()} บาท
                           </span>
                         </div>
                         {appliedPromo && (
-                          <div className="flex justify-between text-success">
+                          <div className="flex justify-between text-success text-sm sm:text-base">
                             <span>ส่วนลด ({appliedPromo.code})</span>
                             <span className="font-semibold">
                               -{appliedPromo.discount.toLocaleString()} บาท
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between text-2xl font-bold pt-2 border-t border-border">
+                        <div className="flex justify-between text-xl sm:text-2xl font-bold pt-2 border-t border-border">
                           <span>ยอดชำระทั้งหมด</span>
                           <span className="text-accent">
                             {total.toLocaleString()} บาท
@@ -718,17 +719,17 @@ const NewBooking = () => {
       </div>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>ยกเลิกการจอง?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg sm:text-xl">ยกเลิกการจอง?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base">
               ข้อมูลที่กรอกจะถูกบันทึกเป็นแบบร่าง คุณสามารถกลับมาทำรายการต่อได้
               หรือต้องการยกเลิกและเริ่มใหม่?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ทำรายการต่อ</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCancel}>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">ทำรายการต่อ</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} className="w-full sm:w-auto">
               ยืนยันยกเลิก
             </AlertDialogAction>
           </AlertDialogFooter>
