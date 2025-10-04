@@ -141,7 +141,7 @@ const Index = () => {
 
         <div className="relative z-10 container mx-auto px-4 py-20 text-center">
           <h1 className="text-6xl md:text-8xl lg:text-9xl mb-6 text-primary text-glow-orange animate-float">
-            Halloween Night 2025
+            THE HOMICDE BLOOD 2025
           </h1>
           <div className="text-2xl md:text-3xl mb-12 text-foreground font-body">
             มาเฉลิมฉลองคืนฮาโลวีนสุดสยองที่ยิ่งใหญ่ที่สุด! 👻
