@@ -14,21 +14,20 @@ const steps = [
 export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
   return (
     <div className="mb-8 sm:mb-10 md:mb-12 w-full">
-      <div className="flex items-center justify-center w-full px-4 sm:px-6">
-        <div className="flex items-center justify-between w-full max-w-xl">
+      <div className="flex items-center justify-center w-full px-2 sm:px-4">
+        <div className="flex items-center justify-between w-full max-w-md sm:max-w-lg">
           {steps.map((step, index) => {
             const isCompleted = currentStep > step.id;
             const isCurrent = currentStep === step.id;
 
             return (
               <div key={step.id} className="flex items-center">
-                {/* Step Circle and Label */}
                 <div className="flex flex-col items-center">
                   <div
                     className={`
                       flex items-center justify-center
-                      w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16
-                      rounded-full border-2 sm:border-3 md:border-4
+                      w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
+                      rounded-full border-2 md:border-3
                       transition-all duration-300
                       ${
                         isCompleted
@@ -40,9 +39,9 @@ export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
                     `}
                   >
                     {isCompleted ? (
-                      <Check className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : (
-                      <span className="text-lg sm:text-xl md:text-2xl font-bold">
+                      <span className="text-base sm:text-lg md:text-xl font-bold">
                         {step.id}
                       </span>
                     )}
@@ -50,7 +49,7 @@ export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
 
                   <span
                     className={`
-                      mt-2 text-xs sm:text-sm md:text-base font-medium text-center whitespace-nowrap
+                      mt-1.5 sm:mt-2 text-xs sm:text-sm font-medium text-center whitespace-nowrap
                       transition-colors duration-300
                       ${
                         isCurrent
@@ -65,9 +64,8 @@ export const BookingProgress = ({ currentStep }: BookingProgressProps) => {
                   </span>
                 </div>
 
-                {/* Connecting Line */}
                 {index < steps.length - 1 && (
-                  <div className="w-12 sm:w-16 md:w-20 h-0.5 mx-2 sm:mx-3 -mt-8 flex-shrink-0">
+                  <div className="w-8 sm:w-12 md:w-16 h-0.5 mx-1.5 sm:mx-2 -mt-6 flex-shrink-0">
                     <div className="h-full bg-border rounded-full overflow-hidden">
                       <div
                         className={`h-full bg-primary transition-all duration-500 ${
