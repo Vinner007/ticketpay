@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Leader, Member } from "@/types/booking";
-import { Trash2, Plus, User, Users } from "lucide-react";
+import { Trash2, Plus, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface MemberFormProps {
@@ -12,6 +12,10 @@ interface MemberFormProps {
   members: Member[];
   onLeaderChange: (leader: Leader) => void;
   onMembersChange: (members: Member[]) => void;
+  errors?: {
+    leader?: { [key: string]: string };
+    members?: { [key: number]: { [key: string]: string } };
+  };
 }
 
 export const MemberForm = ({
@@ -20,6 +24,7 @@ export const MemberForm = ({
   members,
   onLeaderChange,
   onMembersChange,
+  errors,
 }: MemberFormProps) => {
   const handleAddMember = () => {
     if (members.length >= 6) {
@@ -76,9 +81,17 @@ export const MemberForm = ({
               value={leader.name}
               onChange={(e) => onLeaderChange({ ...leader, name: e.target.value })}
               placeholder="กรอกชื่อ-นามสกุล"
-              className="mt-2 border-2 border-input focus:border-primary"
+              className={`mt-2 border-2 focus:border-primary min-h-[48px] ${
+                errors?.leader?.name ? "border-destructive" : "border-input"
+              }`}
               required
             />
+            {errors?.leader?.name && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <span>{errors.leader.name}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -91,9 +104,17 @@ export const MemberForm = ({
               value={leader.email}
               onChange={(e) => onLeaderChange({ ...leader, email: e.target.value })}
               placeholder="example@email.com"
-              className="mt-2 border-2 border-input focus:border-primary"
+              className={`mt-2 border-2 focus:border-primary min-h-[48px] ${
+                errors?.leader?.email ? "border-destructive" : "border-input"
+              }`}
               required
             />
+            {errors?.leader?.email && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <span>{errors.leader.email}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -106,9 +127,17 @@ export const MemberForm = ({
               value={leader.phone}
               onChange={(e) => onLeaderChange({ ...leader, phone: e.target.value })}
               placeholder="0XX-XXX-XXXX"
-              className="mt-2 border-2 border-input focus:border-primary"
+              className={`mt-2 border-2 focus:border-primary min-h-[48px] ${
+                errors?.leader?.phone ? "border-destructive" : "border-input"
+              }`}
               required
             />
+            {errors?.leader?.phone && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <span>{errors.leader.phone}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -123,10 +152,19 @@ export const MemberForm = ({
                 onLeaderChange({ ...leader, age: parseInt(e.target.value) || 0 })
               }
               placeholder="25"
-              className="mt-2 border-2 border-input focus:border-primary"
+              className={`mt-2 border-2 focus:border-primary min-h-[48px] ${
+                errors?.leader?.age ? "border-destructive" : "border-input"
+              }`}
               min="5"
+              max="100"
               required
             />
+            {errors?.leader?.age && (
+              <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <span>{errors.leader.age}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -136,7 +174,7 @@ export const MemberForm = ({
               value={leader.lineId || ""}
               onChange={(e) => onLeaderChange({ ...leader, lineId: e.target.value })}
               placeholder="line.id"
-              className="mt-2 border-2 border-input focus:border-primary"
+              className="mt-2 border-2 border-input focus:border-primary min-h-[48px]"
             />
           </div>
         </div>
@@ -171,7 +209,7 @@ export const MemberForm = ({
                     onClick={() => handleRemoveMember(member.id)}
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px]"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -190,9 +228,19 @@ export const MemberForm = ({
                       handleMemberChange(member.id, "name", e.target.value)
                     }
                     placeholder="กรอกชื่อ-นามสกุล"
-                    className="mt-2 border-2 border-input focus:border-secondary"
+                    className={`mt-2 border-2 focus:border-secondary min-h-[48px] ${
+                      errors?.members?.[index]?.name
+                        ? "border-destructive"
+                        : "border-input"
+                    }`}
                     required
                   />
+                  {errors?.members?.[index]?.name && (
+                    <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.members[index].name}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -211,10 +259,21 @@ export const MemberForm = ({
                       )
                     }
                     placeholder="25"
-                    className="mt-2 border-2 border-input focus:border-secondary"
+                    className={`mt-2 border-2 focus:border-secondary min-h-[48px] ${
+                      errors?.members?.[index]?.age
+                        ? "border-destructive"
+                        : "border-input"
+                    }`}
                     min="5"
+                    max="100"
                     required
                   />
+                  {errors?.members?.[index]?.age && (
+                    <div className="flex items-center gap-1 mt-1 text-sm text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.members[index].age}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -233,7 +292,7 @@ export const MemberForm = ({
                       )
                     }
                     placeholder="0XX-XXX-XXXX"
-                    className="mt-2 border-2 border-input focus:border-secondary"
+                    className="mt-2 border-2 border-input focus:border-secondary min-h-[48px]"
                   />
                 </div>
               </div>
@@ -245,9 +304,10 @@ export const MemberForm = ({
           <Button
             onClick={handleAddMember}
             variant="outline"
-            className="w-full mt-4 border-2 border-dashed border-secondary text-secondary hover:bg-secondary/10"
+            className="w-full mt-4 border-2 border-dashed border-secondary text-secondary hover:bg-secondary/10 min-h-[48px]"
           >
-            <Plus className="w-4 h-4 mr-2" />+ เพิ่มสมาชิก (สูงสุด 7 คน)
+            <Plus className="w-4 h-4 mr-2" />
+            เพิ่มสมาชิก (สูงสุด 7 คน)
           </Button>
         )}
       </div>
