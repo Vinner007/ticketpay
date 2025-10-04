@@ -170,7 +170,7 @@ const Index = () => {
               เลือกวันที่เข้าร่วม
             </h2>
             <p className="text-lg text-muted-foreground">
-              ที่ ตึก 4 ชั้น 1-2 มหาวิทยาลัยศรีปทุม
+              ที่ ตึก 4 ชั้น 1,2 มหาวิทยาลัยศรีปทุม
             </p>
           </div>
 
@@ -287,7 +287,7 @@ const Index = () => {
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">สถานที่</h4>
-              <p className="text-muted-foreground">ตึก 4 ชั้น 1-2</p>
+              <p className="text-muted-foreground">ตึก 4 ชั้น 1,2</p>
               <p className="text-muted-foreground">มหาวิทยาลัยศรีปทุม กรุงเทพฯ</p>
             </div>
           </div>
