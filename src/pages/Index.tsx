@@ -173,9 +173,6 @@ const Index = () => {
             <h2 className="text-5xl md:text-6xl mb-4 text-primary text-glow-orange">
               เลือกวันที่เข้าร่วม
             </h2>
-            <p className="text-xl text-muted-foreground mb-2">
-              เวลา 10:00 - 17:00 น. (ลงทะเบียน 09:30 น.)
-            </p>
             <p className="text-lg text-muted-foreground">
               ที่ ตึก 4 ชั้น 1-2 มหาวิทยาลัยศรีปทุม
             </p>
