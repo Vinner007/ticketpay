@@ -52,7 +52,7 @@ export const MemberForm = ({
       {/* Leader Section */}
       <div className="bg-card rounded-xl p-4 sm:p-6 border-2 border-primary glow-orange">
         <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-          <span>👤</span> หัวหน้ากลุ่ม (Leader)
+          <span>👤</span> หัวหน้าทีม (Leader)
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -170,7 +170,7 @@ export const MemberForm = ({
       {members.length > 0 && (
         <div>
           <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-            <span>👥</span> สมาชิกในกลุ่ม ({members.length} คน)
+            <span>👥</span> สมาชิกในทีม ({members.length} คน)
           </h3>
 
           <div className="space-y-3 sm:space-y-4">
