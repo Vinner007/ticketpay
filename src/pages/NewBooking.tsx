@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SpiderWeb } from "@/components/SpiderWeb";
 import { AnimatedBats } from "@/components/AnimatedBats";
 import { BookingProgress } from "@/components/BookingProgress";
@@ -21,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, MapPin, Clock, Info } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 
@@ -120,6 +122,7 @@ const NewBooking = () => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const [showRulesDialog, setShowRulesDialog] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
 
   const [errors, setErrors] = useState<{
     leader?: { [key: string]: string };
@@ -313,6 +316,7 @@ const NewBooking = () => {
       }
 
       setAppliedPromo({ code: result.code, discount: result.discount });
+      setPromoInput("");
       toast.success(`✅ ใช้โค้ด ${result.code} สำเร็จ! ลด ${result.discount} บาท`);
       return true;
     },
@@ -667,14 +671,93 @@ const NewBooking = () => {
 
                 {/* Step 4: Member Information */}
                 {currentStep === 4 && (
-                  <MemberForm
-                    groupSize={groupSize}
-                    leader={leader}
-                    members={members}
-                    onLeaderChange={setLeader}
-                    onMembersChange={setMembers}
-                    errors={errors}
-                  />
+                  <>
+                    <MemberForm
+                      groupSize={groupSize}
+                      leader={leader}
+                      members={members}
+                      onLeaderChange={setLeader}
+                      onMembersChange={setMembers}
+                      errors={errors}
+                    />
+
+                    {/* Promo Code Section for Mobile */}
+                    <div className="mt-6 sm:mt-8 lg:hidden border-t border-border pt-6 sm:pt-8">
+                      <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+                        <span>💰</span> ส่วนลด & โปรโมชั่น
+                      </h3>
+                      
+                      <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4">
+                        <div className="flex justify-between text-sm sm:text-base mb-2">
+                          <span className="text-muted-foreground">ยอดรวม</span>
+                          <span className="font-semibold">{subtotal.toLocaleString()} บาท</span>
+                        </div>
+                        {appliedPromo && (
+                          <div className="flex justify-between text-success text-sm sm:text-base">
+                            <span>ส่วนลด ({appliedPromo.code})</span>
+                            <span className="font-semibold">-{appliedPromo.discount.toLocaleString()} บาท</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {appliedPromo ? (
+                        <div className="flex items-center justify-between bg-success/10 border border-success rounded-lg p-3 sm:p-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-sm">✓</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-success text-sm sm:text-base">{appliedPromo.code}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">ลด {appliedPromo.discount} บาท</p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleRemovePromo}
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px]"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <Label htmlFor="mobile-promo" className="text-sm sm:text-base">
+                            รหัสส่วนลด (ถ้ามี)
+                          </Label>
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              id="mobile-promo"
+                              value={promoInput}
+                              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                              placeholder="กรอกโค้ดส่วนลด"
+                              className="flex-1 border-2 border-input focus:border-primary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && promoInput.trim()) {
+                                  handleApplyPromo(promoInput.trim());
+                                }
+                              }}
+                            />
+                            <Button
+                              onClick={() => {
+                                if (promoInput.trim()) {
+                                  handleApplyPromo(promoInput.trim());
+                                }
+                              }}
+                              disabled={!promoInput.trim()}
+                              variant="outline"
+                              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground min-h-[44px] sm:min-h-[48px] px-4 sm:px-6"
+                            >
+                              ใช้โค้ด
+                            </Button>
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                            💡 ลองโค้ด: HALLOWEEN10, EARLYBIRD, SCARY20
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
 
                 {/* Step 5: Payment */}
