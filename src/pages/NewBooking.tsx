@@ -104,7 +104,9 @@ const NewBooking = () => {
     discount: number;
   }>();
   const [leader, setLeader] = useState<Leader>({
-    name: "",
+    firstName: "",
+    lastName: "",
+    nickname: "",
     email: "",
     phone: "",
     age: 0,
@@ -175,9 +177,10 @@ const NewBooking = () => {
       const requiredMembers = groupSize - 1;
       const newMembers = Array.from({ length: requiredMembers }, (_, i) => ({
         id: i + 1,
-        name: members[i]?.name || "",
+        firstName: members[i]?.firstName || "",
+        lastName: members[i]?.lastName || "",
+        nickname: members[i]?.nickname || "",
         age: members[i]?.age || 0,
-        emergencyContact: members[i]?.emergencyContact || "",
       }));
       setMembers(newMembers);
     }
@@ -324,8 +327,12 @@ const NewBooking = () => {
   const validateLeader = useCallback(() => {
     const newErrors: any = {};
 
-    if (!leader.name.trim()) {
-      newErrors.name = "กรุณากรอกชื่อ-นามสกุล";
+    if (!leader.firstName?.trim()) {
+      newErrors.firstName = "กรุณากรอกชื่อ";
+    }
+
+    if (!leader.lastName?.trim()) {
+      newErrors.lastName = "กรุณากรอกนามสกุล";
     }
 
     if (!leader.email.trim()) {
@@ -355,8 +362,13 @@ const NewBooking = () => {
     members.forEach((member, index) => {
       const errors: any = {};
 
-      if (!member.name.trim()) {
-        errors.name = "กรุณากรอกชื่อ-นามสกุล";
+      if (!member.firstName?.trim()) {
+        errors.firstName = "กรุณากรอกชื่อ";
+        isValid = false;
+      }
+
+      if (!member.lastName?.trim()) {
+        errors.lastName = "กรุณากรอกนามสกุล";
         isValid = false;
       }
 
@@ -375,11 +387,11 @@ const NewBooking = () => {
   }, [members]);
 
   const validateMemberForm = useCallback(() => {
-    if (!leader.name || !leader.email || !leader.phone || !leader.age) {
+    if (!leader.firstName || !leader.lastName || !leader.email || !leader.phone || !leader.age) {
       return false;
     }
 
-    const validMembers = members.filter((m) => m.name && m.age > 0);
+    const validMembers = members.filter((m) => m.firstName && m.lastName && m.age > 0);
     return validMembers.length === members.length;
   }, [leader, members]);
 
@@ -795,7 +807,10 @@ const NewBooking = () => {
                         </div>
                         <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-muted-foreground">หัวหน้ากลุ่ม:</span>
-                          <span className="font-semibold text-right">{leader.name}</span>
+                          <span className="font-semibold text-right">
+                            {leader.firstName} {leader.lastName}
+                            {leader.nickname && ` (${leader.nickname})`}
+                          </span>
                         </div>
                       </div>
 
@@ -831,60 +846,60 @@ const NewBooking = () => {
       </div>
 
       {/* Rules Dialog */}
-<AlertDialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
-  <AlertDialogContent className="max-w-[90vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-    <AlertDialogHeader>
-      <AlertDialogTitle className="text-xl sm:text-2xl text-primary">
-        📌 กติกาสำคัญ
-      </AlertDialogTitle>
-    </AlertDialogHeader>
-    <div className="space-y-4 text-sm sm:text-base">
-      <div className="space-y-2">
-        <p className="font-semibold">วันจัดงาน:</p>
-        <p>29 – 31 ตุลาคม 2568</p>
-      </div>
-      
-      <div className="space-y-2">
-        <p className="font-semibold">สถานที่:</p>
-        <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
-      </div>
+      <AlertDialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl sm:text-2xl text-primary">
+              📌 กติกาสำคัญ
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-4 text-sm sm:text-base">
+            <div className="space-y-2">
+              <p className="font-semibold">วันจัดงาน:</p>
+              <p>29 – 31 ตุลาคม 2568</p>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="font-semibold">สถานที่:</p>
+              <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
+            </div>
 
-      <div className="space-y-2">
-        <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
-        <ul className="list-decimal list-inside space-y-2 pl-2">
-          <li>กรุณามาถึงก่อนเวลา 30 นาที เพื่อลงทะเบียนและเลือกรอบในการเล่น</li>
-          <li>แสดง QR code/บัตร ที่จุดลงทะเบียน</li>
-          <li>บัตรที่ซื้อมีผลเฉพาะวันที่เลือกไว้เท่านั้น</li>
-          <li className="text-destructive font-semibold">หากไม่มาตามวันที่เลือก ทางทีมงานจะถือว่าสละสิทธิ์และไม่มีการคืนเงิน</li>
-          <li>ผู้เข้าร่วมทุกท่านที่ <strong>แต่งหน้าแต่งกายธีมผี/แฟนซีฮาโลวีน</strong> สามารถเข้าร่วมรับรางวัลได้</li>
-        </ul>
-      </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
+              <ul className="list-decimal list-inside space-y-2 pl-2">
+                <li>กรุณามาถึงก่อนเวลา 30 นาที เพื่อลงทะเบียนและเลือกรอบในการเล่น</li>
+                <li>แสดง QR code/บัตร ที่จุดลงทะเบียน</li>
+                <li>บัตรที่ซื้อมีผลเฉพาะวันที่เลือกไว้เท่านั้น</li>
+                <li className="text-destructive font-semibold">หากไม่มาตามวันที่เลือก ทางทีมงานจะถือว่าสละสิทธิ์และไม่มีการคืนเงิน</li>
+                <li>ผู้เข้าร่วมทุกท่านที่ <strong>แต่งหน้าแต่งกายธีมผี/แฟนซีฮาโลวีน</strong> สามารถเข้าร่วมรับรางวัลได้</li>
+              </ul>
+            </div>
 
-      <div className="space-y-2 bg-primary/10 p-3 rounded-lg">
-        <p className="font-semibold text-primary">🎉 โปรโมชั่นพิเศษ:</p>
-        <p><strong>20 ทีม มา 7 จ่าย 6</strong> (ฟรี 1 คน)</p>
-        <p className="text-sm">ใช้โค้ด: <code className="bg-background px-2 py-1 rounded">GROUP7FOR6</code></p>
-      </div>
+            <div className="space-y-2 bg-primary/10 p-3 rounded-lg">
+              <p className="font-semibold text-primary">🎉 โปรโมชั่นพิเศษ:</p>
+              <p><strong>20 ทีม มา 7 จ่าย 6</strong> (ฟรี 1 คน)</p>
+              <p className="text-sm">ใช้โค้ด: <code className="bg-background px-2 py-1 rounded">GROUP7FOR6</code></p>
+            </div>
 
-      <div className="space-y-2 bg-secondary/10 p-3 rounded-lg">
-        <p className="font-semibold">🎭 พิเศษ!</p>
-        <p>แต่งตัว + แต่งหน้า Theme ฮาโลวีน = รับ Gift Voucher</p>
-      </div>
+            <div className="space-y-2 bg-secondary/10 p-3 rounded-lg">
+              <p className="font-semibold">🎭 พิเศษ!</p>
+              <p>แต่งตัว + แต่งหน้า Theme ฮาโลวีน = รับ Gift Voucher</p>
+            </div>
 
-      <div className="space-y-2">
-        <p className="font-semibold">เวลาดำเนินงาน:</p>
-        <p>• เริ่มลงทะเบียน 09:30 น.</p>
-        <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
-        <p>• รอบละ 10 นาที</p>
-      </div>
-    </div>
-    <AlertDialogFooter>
-      <AlertDialogAction onClick={() => setShowRulesDialog(false)}>
-        เข้าใจแล้ว
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+            <div className="space-y-2">
+              <p className="font-semibold">เวลาดำเนินงาน:</p>
+              <p>• เริ่มลงทะเบียน 09:30 น.</p>
+              <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
+              <p>• รอบละ 10 นาที</p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowRulesDialog(false)}>
+              เข้าใจแล้ว
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
