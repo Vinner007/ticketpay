@@ -20,6 +20,7 @@ const dateLabels: Record<string, string> = {
   "2025-10-28": "28 ตุลาคม 2568 (วันอังคาร)",
   "2025-10-29": "29 ตุลาคม 2568 (วันพุธ)",
   "2025-10-30": "30 ตุลาคม 2568 (วันพฤหัสบดี)",
+  "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
 };
 
 export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
@@ -142,14 +143,17 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
               <div className="text-sm text-muted-foreground mb-1">สถานที่</div>
               <div className="font-semibold flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Haunted Arena, กรุงเทพฯ
+                ตึก 4 ชั้น 1,2 มหาวิทยาลัยศรีปทุม
               </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">
                 ชื่อหัวหน้ากลุ่ม
               </div>
-              <div className="font-semibold">{booking.leader.name}</div>
+              <div className="font-semibold">
+                {booking.leader.firstName} {booking.leader.lastName}
+                {booking.leader.nickname && ` (${booking.leader.nickname})`}
+              </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">จำนวนคน</div>
@@ -160,7 +164,7 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
                 ยอดชำระทั้งหมด
               </div>
               <div className="font-semibold text-accent text-xl">
-                {booking.totalPrice} บาท
+                {booking.totalPrice.toLocaleString()} บาท
               </div>
             </div>
           </div>
@@ -174,12 +178,18 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
           <div className="space-y-2 ml-4">
             <div className="flex items-center gap-2 text-primary">
               <CheckCircle className="w-4 h-4" />
-              <span>{booking.leader.name} (หัวหน้ากลุ่ม)</span>
+              <span>
+                {booking.leader.firstName} {booking.leader.lastName}
+                {booking.leader.nickname && ` (${booking.leader.nickname})`} - หัวหน้ากลุ่ม
+              </span>
             </div>
-            {booking.members.map((member, index) => (
+            {booking.members.map((member) => (
               <div key={member.id} className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-muted-foreground" />
-                <span>{member.name}</span>
+                <span>
+                  {member.firstName} {member.lastName}
+                  {member.nickname && ` (${member.nickname})`}
+                </span>
               </div>
             ))}
           </div>
@@ -197,17 +207,17 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
             <span>นำ QR Code มาในวันงาน (หน้าจอหรือพิมพ์มา)</span>
           </li>
           <li className="flex gap-3">
-            <span className="text-primary">🎭</span>
-            <span>แต่งชุดคอสตูมมาด้วย (ถ้าต้องการลุ้นรางวัล)</span>
+            <span className="text-primary">⏰</span>
+            <span>กรุณามาก่อนเวลา 30 นาที เพื่อลงทะเบียน</span>
           </li>
           <li className="flex gap-3">
-            <span className="text-primary">🚗</span>
-            <span>มีที่จอดรถฟรีสำหรับผู้มีตั๋ว</span>
+            <span className="text-primary">🎭</span>
+            <span>แต่งชุดธีม Halloween มาด้วย (ถ้าต้องการลุ้นรางวัล)</span>
           </li>
           <li className="flex gap-3">
             <span className="text-primary">❌</span>
-            <span>
-              ยกเลิกไม่ได้
+            <span className="text-destructive font-semibold">
+              มาสายไม่คืนเงิน • ยกเลิกไม่ได้
             </span>
           </li>
         </ul>
