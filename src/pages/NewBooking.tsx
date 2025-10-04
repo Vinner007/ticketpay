@@ -684,7 +684,7 @@ const NewBooking = () => {
                     {/* Promo Code Section for Mobile */}
                     <div className="mt-6 sm:mt-8 lg:hidden border-t border-border pt-6 sm:pt-8">
                       <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-                        <span>💰</span> ส่วนลด & โปรโมชั่น
+                        <span>💰</span> สรุปยอดรวม
                       </h3>
                       
                       <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4">
