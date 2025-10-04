@@ -581,7 +581,7 @@ const NewBooking = () => {
                       </div>
                       <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-muted-foreground">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                        <span>ตึก 4 ชั้น 1,2 มหาวิทยาลัยศรีปทุม</span>
+                        <span>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</span>
                       </div>
                     </div>
 

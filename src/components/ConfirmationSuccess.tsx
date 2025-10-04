@@ -143,7 +143,7 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
               <div className="text-sm text-muted-foreground mb-1">สถานที่</div>
               <div className="font-semibold flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                ตึก 4 ชั้น 1,2 มหาวิทยาลัยศรีปทุม
+                ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม
               </div>
             </div>
             <div>
