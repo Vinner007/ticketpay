@@ -207,7 +207,7 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
           <li className="flex gap-3">
             <span className="text-primary">❌</span>
             <span>
-              ยกเลิกได้ก่อนงาน 7 วัน (คืนเงิน 100%) หลังจากนั้นคืน 50%
+              ยกเลิกไม่ได้
             </span>
           </li>
         </ul>
