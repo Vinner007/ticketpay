@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 
@@ -124,10 +124,6 @@ const NewBooking = () => {
       try {
         const data = JSON.parse(draft);
         setShowDraftBanner(true);
-        // Optionally auto-restore
-        // setCurrentStep(data.currentStep);
-        // setGroupSize(data.groupSize);
-        // ... restore other fields
       } catch (error) {
         console.error("Failed to load draft:", error);
       }
@@ -201,12 +197,10 @@ const NewBooking = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Esc to go back
       if (e.key === "Escape" && currentStep > 1 && currentStep < 5) {
         setCurrentStep((prev) => prev - 1);
       }
 
-      // Ctrl+Enter to proceed
       if (e.ctrlKey && e.key === "Enter" && currentStep < 4) {
         if (currentStep === 1) {
           setCurrentStep(2);
@@ -396,7 +390,6 @@ const NewBooking = () => {
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const newBooking: Booking = {
@@ -419,14 +412,12 @@ const NewBooking = () => {
         bookingDate: new Date().toISOString(),
       };
 
-      // Save booking to localStorage
       const existingBookings = JSON.parse(
         localStorage.getItem("bookings") || "[]"
       );
       existingBookings.push(newBooking);
       localStorage.setItem("bookings", JSON.stringify(existingBookings));
 
-      // Clear draft
       localStorage.removeItem("booking_draft");
 
       setBooking(newBooking);
@@ -465,7 +456,6 @@ const NewBooking = () => {
       <SpiderWeb position="top-right" />
 
       <div className="container mx-auto px-4 max-w-7xl">
-        {/* Draft Banner */}
         {showDraftBanner && currentStep === 1 && (
           <Card className="mb-6 p-4 bg-primary/10 border-primary">
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -522,10 +512,8 @@ const NewBooking = () => {
           <ConfirmationSuccess booking={booking} />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2">
               <Card className="p-8 bg-card border-2 border-border shadow-card">
-                {/* Step 1: Date Selection */}
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 mb-6">
@@ -571,7 +559,6 @@ const NewBooking = () => {
                   </div>
                 )}
 
-                {/* Step 2: Group Size */}
                 {currentStep === 2 && (
                   <GroupSizeSelector
                     selectedSize={groupSize}
@@ -580,7 +567,6 @@ const NewBooking = () => {
                   />
                 )}
 
-                {/* Step 3: Member Information */}
                 {currentStep === 3 && (
                   <MemberForm
                     groupSize={groupSize}
@@ -592,10 +578,8 @@ const NewBooking = () => {
                   />
                 )}
 
-                {/* Step 4: Payment */}
                 {currentStep === 4 && (
                   <div className="space-y-6">
-                    {/* Payment Timer */}
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">
                         ⏰ กรุณาชำระเงินภายใน
@@ -625,7 +609,6 @@ const NewBooking = () => {
                   </div>
                 )}
 
-                {/* Navigation Buttons */}
                 {currentStep < 4 && currentStep > 1 && (
                   <div className="flex flex-col sm:flex-row gap-4 mt-8">
                     <Button
@@ -658,7 +641,6 @@ const NewBooking = () => {
               </Card>
             </div>
 
-            {/* Sidebar */}
             {currentStep < 4 && (
               <div className="lg:col-span-1">
                 <BookingSidebar
@@ -684,7 +666,6 @@ const NewBooking = () => {
               </div>
             )}
 
-            {/* Payment Summary for Step 4 */}
             {currentStep === 4 && (
               <div className="lg:col-span-1">
                 <div className="sticky top-6">
@@ -746,7 +727,6 @@ const NewBooking = () => {
         )}
       </div>
 
-      {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
