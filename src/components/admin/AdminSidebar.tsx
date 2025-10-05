@@ -27,11 +27,11 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard", permission: "all" },
   { icon: Ticket, label: "Bookings", path: "/admin/bookings", permission: "view_bookings" },
   { icon: ScanLine, label: "Check-in", path: "/admin/check-in", permission: "check_in" },
-  { icon: Tag, label: "Promo Codes", path: "/admin/promo-codes", permission: "manage_promos" },
+  { icon: Tag, label: "Promo Codes", path: "/admin/promo-codes", permission: "manage_promo_codes" },
   { icon: Settings, label: "Event Settings", path: "/admin/settings", permission: "edit_settings" },
   { icon: BarChart3, label: "Reports", path: "/admin/reports", permission: "view_reports" },
   { icon: MessageSquare, label: "Messages", path: "/admin/messages", permission: "send_messages" },
-  { icon: Users, label: "Admin Users", path: "/admin/users", permission: "manage_users" },
+  { icon: Users, label: "Admin Users", path: "/admin/users", permission: "manage_admins" },
 ];
 
 export const AdminSidebar = ({ session, isCollapsed }: AdminSidebarProps) => {
