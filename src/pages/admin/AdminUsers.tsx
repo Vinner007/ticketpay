@@ -15,10 +15,10 @@ import {
   Power,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DEMO_ADMINS } from '@/lib/auth';
+import { DEMO_ADMINS } from '@/lib/adminAuth';
 import type { AdminUser, Permission } from '@/types/admin';
 
-const AdminUsers = () => {
+export const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
