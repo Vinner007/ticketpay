@@ -1,6 +1,164 @@
 import { Booking, PromoCode } from "@/types/booking";
 import { ActivityLog } from "@/types/admin";
 
+// ===== เพิ่มส่วนนี้ใหม่ =====
+export interface AdminUser {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: 'super_admin' | 'admin' | 'staff' | 'viewer';
+  status: 'active' | 'inactive';
+  createdAt: string;
+  lastLogin?: string;
+  permissions: {
+    view_bookings: boolean;
+    edit_bookings: boolean;
+    delete_bookings: boolean;
+    check_in: boolean;
+    manage_promo_codes: boolean;
+    view_reports: boolean;
+    send_messages: boolean;
+    manage_settings: boolean;
+    manage_admins: boolean;
+  };
+}
+
+export const DEMO_ADMINS: AdminUser[] = [
+  {
+    id: '1',
+    email: 'admin@ghoulgate.com',
+    password: 'Admin@2025',
+    name: 'ผู้ดูแลระบบหลัก',
+    role: 'super_admin',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    lastLogin: '2025-10-05T08:30:00Z',
+    permissions: {
+      view_bookings: true,
+      edit_bookings: true,
+      delete_bookings: true,
+      check_in: true,
+      manage_promo_codes: true,
+      view_reports: true,
+      send_messages: true,
+      manage_settings: true,
+      manage_admins: true,
+    },
+  },
+  {
+    id: '2',
+    email: 'staff@ghoulgate.com',
+    password: 'Staff@2025',
+    name: 'พนักงาน',
+    role: 'staff',
+    status: 'active',
+    createdAt: '2025-02-01T00:00:00Z',
+    lastLogin: '2025-10-04T15:20:00Z',
+    permissions: {
+      view_bookings: true,
+      edit_bookings: true,
+      delete_bookings: false,
+      check_in: true,
+      manage_promo_codes: false,
+      view_reports: true,
+      send_messages: false,
+      manage_settings: false,
+      manage_admins: false,
+    },
+  },
+  {
+    id: '3',
+    email: 'viewer@ghoulgate.com',
+    password: 'View@2025',
+    name: 'ผู้ดูข้อมูล',
+    role: 'viewer',
+    status: 'active',
+    createdAt: '2025-03-01T00:00:00Z',
+    lastLogin: '2025-10-03T12:00:00Z',
+    permissions: {
+      view_bookings: true,
+      edit_bookings: false,
+      delete_bookings: false,
+      check_in: false,
+      manage_promo_codes: false,
+      view_reports: true,
+      send_messages: false,
+      manage_settings: false,
+      manage_admins: false,
+    },
+  },
+  {
+    id: '4',
+    email: 'manager@ghoulgate.com',
+    password: 'Manager@2025',
+    name: 'ผู้จัดการ',
+    role: 'admin',
+    status: 'active',
+    createdAt: '2025-01-15T00:00:00Z',
+    lastLogin: '2025-10-05T09:15:00Z',
+    permissions: {
+      view_bookings: true,
+      edit_bookings: true,
+      delete_bookings: true,
+      check_in: true,
+      manage_promo_codes: true,
+      view_reports: true,
+      send_messages: true,
+      manage_settings: true,
+      manage_admins: false,
+    },
+  },
+  {
+    id: '5',
+    email: 'checkin@ghoulgate.com',
+    password: 'CheckIn@2025',
+    name: 'เจ้าหน้าที่เช็คอิน',
+    role: 'staff',
+    status: 'active',
+    createdAt: '2025-03-10T00:00:00Z',
+    lastLogin: '2025-10-05T07:00:00Z',
+    permissions: {
+      view_bookings: true,
+      edit_bookings: false,
+      delete_bookings: false,
+      check_in: true,
+      manage_promo_codes: false,
+      view_reports: false,
+      send_messages: false,
+      manage_settings: false,
+      manage_admins: false,
+    },
+  },
+];
+
+// Helper Functions
+export const validateAdminLogin = (email: string, password: string): AdminUser | undefined => {
+  return DEMO_ADMINS.find(
+    admin => 
+      admin.email.toLowerCase() === email.toLowerCase() && 
+      admin.password === password && 
+      admin.status === 'active'
+  );
+};
+
+export const checkPermission = (
+  userId: string, 
+  permission: keyof AdminUser['permissions']
+): boolean => {
+  const admin = DEMO_ADMINS.find(a => a.id === userId);
+  return admin?.permissions[permission] || false;
+};
+
+export const getAdminById = (userId: string): AdminUser | undefined => {
+  return DEMO_ADMINS.find(a => a.id === userId);
+};
+
+export const getAllAdmins = (): AdminUser[] => {
+  return DEMO_ADMINS;
+};
+// ===== จบส่วนที่เพิ่มใหม่ =====
+
 const thaiFirstNames = [
   "สมชาย", "สมหญิง", "วิชัย", "สุภาพ", "ประยุทธ", "นิภา", "วิไล", "สมศักดิ์",
   "ธนพล", "กันตนา", "ปวีณา", "อรรถพล", "ชนิดา", "ธนวัฒน์", "อรุณี", "พงศกร",
@@ -92,7 +250,8 @@ function getRandomPromoCode(): { code: string; discount: number } | undefined {
 
 export function generateMockBookings(count: number = 200): Booking[] {
   const bookings: Booking[] = [];
-  const dates = ["2025-10-28", "2025-10-29", "2025-10-30"];
+  // ✅ อัพเดทวันที่จาก 28, 29, 30 เป็น 29, 30, 31
+  const dates = ["2025-10-29", "2025-10-30", "2025-10-31"];
   const timeSlots = ["รอบเช้า", "รอบเที่ยง", "รอบเย็น"];
   const timeSlotTimes = ["10:00 - 12:00 น.", "12:30 - 14:30 น.", "15:00 - 17:00 น."];
   const paymentMethods: Array<"credit-card" | "promptpay" | "bank-transfer"> = ["promptpay", "credit-card", "bank-transfer"];
@@ -154,8 +313,8 @@ export function generateMockBookings(count: number = 200): Booking[] {
       };
     });
 
-    // Check-in status (only for Oct 28 and paid bookings)
-    const isCheckedIn = eventDate === "2025-10-28" && paymentStatus === "completed" && Math.random() < 0.25;
+    // ✅ อัพเดท check-in status จาก Oct 28 เป็น Oct 29
+    const isCheckedIn = eventDate === "2025-10-29" && paymentStatus === "completed" && Math.random() < 0.25;
 
     const booking: Booking = {
       bookingId: `HW${String(25000 + i).padStart(5, "0")}`,
