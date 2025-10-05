@@ -292,7 +292,18 @@ const Index = () => {
             </div>
           </div>
           <div className="text-center text-muted-foreground border-t border-border pt-8">
-            <p>&copy; 2025 Cxntrolx . All rights reserved.</p>
+            <p>
+              &copy; 2025{" "}
+              <a
+                href="https://www.cxntrolx.in.th/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors duration-300 underline font-semibold"
+              >
+                Cxntrolx
+              </a>
+              . All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
