@@ -8,7 +8,6 @@ import { SpiderWeb } from "@/components/SpiderWeb";
 import { AnimatedBats } from "@/components/AnimatedBats";
 import { BookingProgress } from "@/components/BookingProgress";
 import { BookingSidebar } from "@/components/BookingSidebar";
-import { TimeSlotSelector } from "@/components/TimeSlotSelector";
 import { GroupSizeSelector } from "@/components/GroupSizeSelector";
 import { MemberForm } from "@/components/MemberForm";
 import { PaymentMethods } from "@/components/PaymentMethods";
