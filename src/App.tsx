@@ -12,6 +12,10 @@ import { Dashboard } from "./pages/admin/Dashboard";
 import { Bookings } from "./pages/admin/Bookings";
 import { CheckIn } from "./pages/admin/CheckIn";
 import { PromoCodes } from "./pages/admin/PromoCodes";
+import { Settings } from "./pages/admin/Settings";        // ✅ เพิ่ม
+import { Reports } from "./pages/admin/Reports";          // ✅ เพิ่ม
+import { Messages } from "./pages/admin/Messages";        // ✅ เพิ่ม
+import { AdminUsers } from "./pages/admin/AdminUsers";    // ✅ เพิ่ม
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 import { initializeMockData } from "./lib/mockData";
 
@@ -38,6 +42,12 @@ const App = () => (
             <Route path="bookings" element={<ProtectedRoute requiredPermission="view_bookings"><Bookings /></ProtectedRoute>} />
             <Route path="check-in" element={<ProtectedRoute requiredPermission="check_in"><CheckIn /></ProtectedRoute>} />
             <Route path="promo-codes" element={<ProtectedRoute requiredPermission="manage_promo_codes"><PromoCodes /></ProtectedRoute>} />
+            
+            {/* ✅ เพิ่ม routes เหล่านี้ */}
+            <Route path="reports" element={<ProtectedRoute requiredPermission="view_reports"><Reports /></ProtectedRoute>} />
+            <Route path="messages" element={<ProtectedRoute requiredPermission="send_messages"><Messages /></ProtectedRoute>} />
+            <Route path="settings" element={<ProtectedRoute requiredPermission="manage_settings"><Settings /></ProtectedRoute>} />
+            <Route path="users" element={<ProtectedRoute requiredPermission="manage_admins"><AdminUsers /></ProtectedRoute>} />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
