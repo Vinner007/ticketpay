@@ -26,7 +26,7 @@ const Settings = () => {
     lineUrl: 'https://line.me/ghoulgate',
   });
 
-  export const [eventDates, setEventDates] = useState([
+  const [eventDates, setEventDates] = useState([
     {
       date: '2025-10-29',
       dayName: 'วันพุธ',
