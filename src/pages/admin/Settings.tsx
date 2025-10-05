@@ -25,6 +25,7 @@ import {
   RotateCcw,
   FileText,
   ChevronDown,
+  SendHorizontal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -1262,7 +1263,7 @@ const Settings = () => {
               ยกเลิก
             </Button>
             <Button onClick={handleSendTestEmail} className="bg-primary">
-              <Send className="w-4 h-4 mr-2" />
+              <SendHorizontal className="w-4 h-4 mr-2" />
               ส่งทดสอบ
             </Button>
           </DialogFooter>
