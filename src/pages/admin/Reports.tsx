@@ -27,7 +27,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const Reports = () => {
+export const Reports = () => {
   const [dateRange, setDateRange] = useState({
     from: '2025-09-01',
     to: '2025-10-05',
