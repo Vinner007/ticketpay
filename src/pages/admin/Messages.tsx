@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Mail,
-  Send,
+  Send as SendIcon,
   Clock,
   CheckCircle,
   XCircle,
@@ -307,7 +307,7 @@ export const Messages = () => {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Send className="w-4 h-4 inline mr-2" />
+            <SendIcon className="w-4 h-4 inline mr-2" />
             ส่งข้อความ
           </button>
           <button
@@ -597,7 +597,7 @@ export const Messages = () => {
                         onChange={(e) => setScheduling(e.target.value)}
                         className="w-4 h-4 text-primary"
                       />
-                      <Send className="w-4 h-4 text-primary" />
+                      <SendIcon className="w-4 h-4 text-primary" />
                       <span className="font-medium">ส่งทันที</span>
                     </label>
                     <label className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
@@ -687,7 +687,7 @@ export const Messages = () => {
                     className="w-full bg-primary hover:bg-primary/90 text-white py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                     disabled={!subject.trim() || !body.trim() || recipientCount === 0}
                   >
-                    <Send className="w-5 h-5 mr-2" />
+                    <SendIcon className="w-5 h-5 mr-2" />
                     ส่งข้อความ
                   </Button>
                   <Button
@@ -780,7 +780,7 @@ export const Messages = () => {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                        <Send className="w-5 h-5 text-muted-foreground" />
+                        <SendIcon className="w-5 h-5 text-muted-foreground" />
                         <div>
                           <p className="text-xs text-muted-foreground">ส่งแล้ว</p>
                           <p className="font-bold text-lg">{msg.stats.sent}</p>
@@ -984,7 +984,7 @@ export const Messages = () => {
               ยกเลิก
             </Button>
             <Button onClick={handleSendTest} className="bg-primary">
-              <Send className="w-4 h-4 mr-2" />
+              <SendIcon className="w-4 h-4 mr-2" />
               ส่งทดสอบ
             </Button>
           </DialogFooter>
@@ -1035,7 +1035,7 @@ export const Messages = () => {
               ยกเลิก
             </Button>
             <Button onClick={handleSendMessage} className="bg-primary">
-              <Send className="w-4 h-4 mr-2" />
+              <SendIcon className="w-4 h-4 mr-2" />
               ยืนยันการส่ง
             </Button>
           </DialogFooter>
