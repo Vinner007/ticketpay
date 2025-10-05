@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mail, Send, Clock, CheckCircle, XCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
-const Messages = () => {
+export const Messages = () => {
   const [activeTab, setActiveTab] = useState('send');
   const [recipientType, setRecipientType] = useState('all');
   const [messageType, setMessageType] = useState('email');
