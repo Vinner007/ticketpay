@@ -12,10 +12,10 @@ import { Dashboard } from "./pages/admin/Dashboard";
 import { Bookings } from "./pages/admin/Bookings";
 import { CheckIn } from "./pages/admin/CheckIn";
 import { PromoCodes } from "./pages/admin/PromoCodes";
-import { Settings } from "./pages/admin/Settings";        // ✅ เพิ่ม
-import { Reports } from "./pages/admin/Reports";          // ✅ เพิ่ม
-import { Messages } from "./pages/admin/Messages";        // ✅ เพิ่ม
-import { AdminUsers } from "./pages/admin/AdminUsers";    // ✅ เพิ่ม
+import Settings from "./pages/admin/Settings";        // ✅ เพิ่ม
+import Reports from "./pages/admin/Reports";          // ✅ เพิ่ม
+import Messages from "./pages/admin/Messages";        // ✅ เพิ่ม
+import AdminUsers from "./pages/admin/AdminUsers";    // ✅ เพิ่ม
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
 import { initializeMockData } from "./lib/mockData";
 
