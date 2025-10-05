@@ -1,6 +1,6 @@
 import { AdminUser, AdminSession } from "@/types/admin";
 
-const DEMO_ADMINS: AdminUser[] = [
+export const DEMO_ADMINS: AdminUser[] = [
   {
     id: "1",
     email: "admin@ghoulgate.com",
