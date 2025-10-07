@@ -68,16 +68,6 @@ import { toast } from "sonner";
 type SortField = 'bookingId' | 'leader' | 'eventDate' | 'groupSize' | 'totalPrice' | 'paymentStatus' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
 
-// ความจุสูงสุดของระบบ
-const CAPACITY = {
-  TOTAL_ROUNDS: 72,           // รอบทั้งหมด 2 เรื่อง
-  ROUNDS_PER_STORY: 36,       // รอบต่อเรื่อง
-  MAX_PEOPLE_PER_ROUND: 7,    // คนสูงสุดต่อรอบ
-  TOTAL_CAPACITY: 504,        // ความจุทั้งหมด 2 เรื่อง
-  CAPACITY_PER_STORY: 252,    // ความจุต่อเรื่อง
-  TOTAL_TEAMS: 72,            // จำนวนทีมทั้งหมด
-};
-
 export const Bookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,30 +122,12 @@ export const Bookings = () => {
     const pendingPayments = bookings.filter(b => b.paymentStatus === 'pending').length;
     const checkedIn = bookings.filter(b => b.checkInStatus).length;
     const checkInRate = bookings.length > 0 ? (checkedIn / bookings.length) * 100 : 0;
-    
-    // คำนวณจำนวนผู้เข้าร่วมทั้งหมด
-    const totalParticipants = bookings
-      .filter(b => b.paymentStatus === 'completed')
-      .reduce((sum, b) => sum + b.groupSize, 0);
-    
-    // คำนวณจำนวนทีมที่จองแล้ว
-    const totalTeams = bookings.filter(b => b.paymentStatus === 'completed').length;
-    
-    // คำนวณอัตราการจองเต็ม
-    const capacityUsage = (totalParticipants / CAPACITY.TOTAL_CAPACITY) * 100;
-    const teamsUsage = (totalTeams / CAPACITY.TOTAL_TEAMS) * 100;
 
     return {
       todayBookings: todayBookings.length,
       totalRevenue,
       pendingPayments,
       checkInRate: checkInRate.toFixed(1),
-      totalParticipants,
-      totalTeams,
-      capacityUsage: capacityUsage.toFixed(1),
-      teamsUsage: teamsUsage.toFixed(1),
-      availableSlots: CAPACITY.TOTAL_CAPACITY - totalParticipants,
-      availableTeams: CAPACITY.TOTAL_TEAMS - totalTeams,
     };
   }, [bookings]);
 
@@ -450,61 +422,6 @@ export const Bookings = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">ความจุที่ใช้</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalParticipants}/{CAPACITY.TOTAL_CAPACITY}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.capacityUsage}% เต็ม • เหลือ {stats.availableSlots} ที่
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">ทีมที่จอง</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTeams}/{CAPACITY.TOTAL_TEAMS}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.teamsUsage}% • เหลือ {stats.availableTeams} ทีม
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Capacity Info Banner */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{CAPACITY.TOTAL_ROUNDS}</div>
-              <p className="text-xs text-muted-foreground">รอบทั้งหมด (2 เรื่อง)</p>
-              <p className="text-xs text-muted-foreground mt-1">เรื่องละ {CAPACITY.ROUNDS_PER_STORY} รอบ</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{CAPACITY.MAX_PEOPLE_PER_ROUND}</div>
-              <p className="text-xs text-muted-foreground">คนสูงสุดต่อรอบ</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{CAPACITY.TOTAL_CAPACITY}</div>
-              <p className="text-xs text-muted-foreground">ความจุทั้งหมด</p>
-              <p className="text-xs text-muted-foreground mt-1">เรื่องละ {CAPACITY.CAPACITY_PER_STORY} คน</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{CAPACITY.TOTAL_TEAMS}</div>
-              <p className="text-xs text-muted-foreground">จำนวนทีมทั้งหมด</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Additional Stats Row */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">รอชำระ</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -522,19 +439,6 @@ export const Bookings = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.checkInRate}%</div>
             <p className="text-xs text-muted-foreground">อัตราการเช็คอิน</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">อัตราการจอง</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.capacityUsage}%</div>
-            <p className="text-xs text-muted-foreground">
-              {parseFloat(stats.capacityUsage) >= 90 ? 'ใกล้เต็ม!' : parseFloat(stats.capacityUsage) >= 70 ? 'กำลังดี' : 'ยังว่างเยอะ'}
-            </p>
           </CardContent>
         </Card>
       </div>
