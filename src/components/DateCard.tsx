@@ -40,7 +40,13 @@ export const DateCard = ({ date, dayName, month, year, availableSlots, status, d
   const config = statusConfig[status];
 
   const handleSelect = () => {
-    navigate(`/booking?date=${dateValue}`);
+    // เช็คว่ามี selectedStory หรือยัง ถ้ายัง ให้ไปเลือกเรื่องก่อน
+    const selectedStory = localStorage.getItem("selectedStory");
+    if (!selectedStory) {
+      navigate("/story-selection");
+    } else {
+      navigate(`/booking?date=${dateValue}`);
+    }
   };
 
   return (
@@ -68,11 +74,17 @@ export const DateCard = ({ date, dayName, month, year, availableSlots, status, d
 
       <div className="flex items-center justify-center gap-2 mb-4 text-muted-foreground">
         <Users className="w-4 h-4" />
-        <span className="text-sm">เหลือที่ว่าง: {availableSlots} กลุ่ม</span>
+        <span className="text-sm">เหลือที่ว่าง: {availableSlots} รอบ/เรื่อง</span>
+      </div>
+
+      <div className="text-center mb-2">
+        <div className="text-3xl font-bold text-accent">80 บาท/คน</div>
       </div>
 
       <div className="text-center mb-6">
-        <div className="text-3xl font-bold text-accent">80 บาท/คน</div>
+        <div className="text-xs text-muted-foreground">
+          2 เรื่อง • รวม {availableSlots * 2} รอบ
+        </div>
       </div>
 
       <Button
