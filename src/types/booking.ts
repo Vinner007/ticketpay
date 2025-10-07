@@ -33,6 +33,7 @@ export interface Leader {
 export interface Booking {
   bookingId: string;
   confirmationCode: string;
+  storyTheme: "cursed-cinema" | "lesson-blood";
   eventDate: string;
   timeSlot: string;
   timeSlotTime: string;
@@ -50,6 +51,12 @@ export interface Booking {
   paymentStatus: "pending" | "completed" | "failed";
   qrCodeData: string;
   bookingDate: string;
+  checkInStatus?: "checked-in" | "not-checked-in";
+  checkInTime?: string;
+  checkInBy?: string;
+  source?: "website" | "manual" | "import";
+  adminNotes?: string;
+  createdAt?: string;
 }
 
 export const PROMO_CODES: PromoCode[] = [

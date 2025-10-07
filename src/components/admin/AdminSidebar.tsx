@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AdminSession } from "@/types/admin";
+import { AdminSession, Permission } from "@/types/admin";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -24,14 +24,14 @@ interface AdminSidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard", permission: "all" },
-  { icon: Ticket, label: "Bookings", path: "/admin/bookings", permission: "view_bookings" },
-  { icon: ScanLine, label: "Check-in", path: "/admin/check-in", permission: "check_in" },
-  { icon: Tag, label: "Promo Codes", path: "/admin/promo-codes", permission: "manage_promo_codes" },
-  { icon: Settings, label: "Event Settings", path: "/admin/settings", permission: "edit_settings" },
-  { icon: BarChart3, label: "Reports", path: "/admin/reports", permission: "view_reports" },
-  { icon: MessageSquare, label: "Messages", path: "/admin/messages", permission: "send_messages" },
-  { icon: Users, label: "Admin Users", path: "/admin/users", permission: "manage_admins" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard", permission: "all" as const },
+  { icon: Ticket, label: "Bookings", path: "/admin/bookings", permission: "view_bookings" as const },
+  { icon: ScanLine, label: "Check-in", path: "/admin/check-in", permission: "check_in" as const },
+  { icon: Tag, label: "Promo Codes", path: "/admin/promo-codes", permission: "manage_promo_codes" as const },
+  { icon: Settings, label: "Event Settings", path: "/admin/settings", permission: "manage_settings" as const },
+  { icon: BarChart3, label: "Reports", path: "/admin/reports", permission: "view_reports" as const },
+  { icon: MessageSquare, label: "Messages", path: "/admin/messages", permission: "send_messages" as const },
+  { icon: Users, label: "Admin Users", path: "/admin/users", permission: "manage_admins" as const },
 ];
 
 export const AdminSidebar = ({ session, isCollapsed }: AdminSidebarProps) => {
@@ -44,10 +44,10 @@ export const AdminSidebar = ({ session, isCollapsed }: AdminSidebarProps) => {
     navigate("/admin/login");
   };
 
-  const hasPermission = (permission: string) => {
+  const hasPermission = (permission: Permission | "all") => {
     if (session.user.role === "super_admin") return true;
     if (permission === "all") return true;
-    return session.user.permissions.includes(permission);
+    return session.user.permissions.includes(permission as Permission);
   };
 
   const visibleItems = menuItems.filter((item) => hasPermission(item.permission));

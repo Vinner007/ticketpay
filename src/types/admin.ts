@@ -1,10 +1,21 @@
+export type Permission = 
+  | "view_bookings"
+  | "edit_bookings"
+  | "delete_bookings"
+  | "check_in"
+  | "manage_promo_codes"
+  | "view_reports"
+  | "send_messages"
+  | "manage_settings"
+  | "manage_admins";
+
 export interface AdminUser {
   id: string;
   email: string;
   fullName: string;
   role: "super_admin" | "staff" | "viewer";
   status: "active" | "inactive";
-  permissions: string[];
+  permissions: Permission[];
   createdAt: string;
   lastLogin?: string;
 }

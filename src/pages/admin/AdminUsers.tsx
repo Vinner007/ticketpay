@@ -102,11 +102,11 @@ export const AdminUsers = () => {
     'edit_bookings',
     'delete_bookings',
     'check_in',
-    'manage_promos',
-    'edit_settings',
+    'manage_promo_codes',
+    'manage_settings',
     'view_reports',
     'send_messages',
-    'manage_users',
+    'manage_admins',
   ];
 
   const permissionLabels: Record<Permission, string> = {
@@ -114,11 +114,11 @@ export const AdminUsers = () => {
     edit_bookings: 'แก้ไขการจอง',
     delete_bookings: 'ลบการจอง',
     check_in: 'เช็คอิน',
-    manage_promos: 'จัดการโค้ดส่วนลด',
-    edit_settings: 'แก้ไขการตั้งค่า',
+    manage_promo_codes: 'จัดการโค้ดส่วนลด',
+    manage_settings: 'แก้ไขการตั้งค่า',
     view_reports: 'ดูรายงาน',
     send_messages: 'ส่งข้อความ',
-    manage_users: 'จัดการผู้ใช้',
+    manage_admins: 'จัดการผู้ใช้',
   };
 
   // Mock Activity Logs

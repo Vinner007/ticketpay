@@ -285,8 +285,11 @@ export const Bookings = () => {
     setEditForm({
       eventDate: booking.eventDate,
       groupSize: booking.groupSize,
-      leader: { ...booking.leader },
-      paymentStatus: booking.paymentStatus,
+      leader: {
+        ...booking.leader,
+        lineId: booking.leader.lineId || ''
+      },
+      paymentStatus: booking.paymentStatus as "pending",
       adminNotes: booking.adminNotes || '',
     });
     setActiveTab('edit');
@@ -302,7 +305,12 @@ export const Bookings = () => {
     if (selectedBooking) {
       const updated = bookings.map(b => 
         b.bookingId === selectedBooking.bookingId 
-          ? { ...b, checkInStatus: true, checkInTime: new Date().toISOString() }
+          ? { 
+              ...b, 
+              checkInStatus: "checked-in" as const, 
+              checkInTime: new Date().toISOString(),
+              checkInBy: "admin@ghoulgate.com"
+            }
           : b
       );
       setBookings(updated);

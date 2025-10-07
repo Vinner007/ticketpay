@@ -1,4 +1,4 @@
-import { AdminUser, AdminSession } from "@/types/admin";
+import { AdminUser, AdminSession, Permission } from "@/types/admin";
 
 export const DEMO_ADMINS: AdminUser[] = [
   {
@@ -7,7 +7,17 @@ export const DEMO_ADMINS: AdminUser[] = [
     fullName: "Super Admin",
     role: "super_admin",
     status: "active",
-    permissions: ["all"],
+    permissions: [
+      "view_bookings",
+      "edit_bookings",
+      "delete_bookings",
+      "check_in",
+      "manage_promo_codes",
+      "view_reports",
+      "send_messages",
+      "manage_settings",
+      "manage_admins"
+    ],
     createdAt: "2025-09-01T00:00:00Z",
   },
   {
@@ -94,7 +104,7 @@ export const getAdminSession = (): AdminSession | null => {
 
 export const hasPermission = (
   session: AdminSession | null,
-  permission: string
+  permission: Permission
 ): boolean => {
   if (!session) return false;
   if (session.user.role === "super_admin") return true;

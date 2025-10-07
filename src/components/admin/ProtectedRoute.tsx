@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getAdminSession, hasPermission } from "@/lib/adminAuth";
-import { AdminSession } from "@/types/admin";
+import { AdminSession, Permission } from "@/types/admin";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredPermission?: string;
+  requiredPermission?: Permission;
 }
 
 export const ProtectedRoute = ({ children, requiredPermission }: ProtectedRouteProps) => {

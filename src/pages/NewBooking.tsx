@@ -95,6 +95,7 @@ const timeSlots = [
 const NewBooking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const selectedStory = searchParams.get("story") as "cursed-cinema" | "lesson-blood" || "cursed-cinema";
   const selectedDate = searchParams.get("date") || "2025-10-29";
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -429,6 +430,7 @@ const NewBooking = () => {
           .toString(36)
           .substring(2, 10)
           .toUpperCase(),
+        storyTheme: selectedStory,
         eventDate: selectedDate,
         timeSlot: selectedSlot?.label || "",
         timeSlotTime: selectedSlot?.time || "",
@@ -443,6 +445,9 @@ const NewBooking = () => {
         paymentStatus: "completed",
         qrCodeData: `HW${Date.now()}`,
         bookingDate: new Date().toISOString(),
+        checkInStatus: "not-checked-in",
+        source: "website",
+        createdAt: new Date().toISOString(),
       };
 
       const existingBookings = JSON.parse(

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface DateCardProps {
   date: number;
@@ -9,13 +8,20 @@ interface DateCardProps {
   month: string;
   year: number;
   availableSlots: number;
-  status: "available" | "limited" | "full";
+  status: "available" | "limited" | "full" | "sold-out";
   dateValue: string;
+  onClick?: () => void;
 }
 
-export const DateCard = ({ date, dayName, month, year, availableSlots, status, dateValue }: DateCardProps) => {
-  const navigate = useNavigate();
-  
+export const DateCard = ({ 
+  date, 
+  dayName, 
+  month, 
+  year, 
+  availableSlots, 
+  status, 
+  onClick 
+}: DateCardProps) => {
   const statusConfig = {
     available: {
       badge: "มีที่ว่าง",
@@ -35,13 +41,15 @@ export const DateCard = ({ date, dayName, month, year, availableSlots, status, d
       buttonClass: "opacity-50",
       disabled: true,
     },
+    "sold-out": {
+      badge: "เต็มแล้ว",
+      badgeClass: "bg-destructive text-destructive-foreground",
+      buttonClass: "opacity-50",
+      disabled: true,
+    },
   };
 
   const config = statusConfig[status];
-
-  const handleSelect = () => {
-    navigate(`/booking?date=${dateValue}`);
-  };
 
   return (
     <div className="group relative bg-card rounded-xl p-8 border-2 border-border transition-all duration-300 hover:-translate-y-2 hover:border-primary hover:shadow-glow-orange">
@@ -76,7 +84,7 @@ export const DateCard = ({ date, dayName, month, year, availableSlots, status, d
       </div>
 
       <Button
-        onClick={handleSelect}
+        onClick={onClick}
         disabled={config.disabled}
         className={`w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-orange ${config.buttonClass}`}
       >

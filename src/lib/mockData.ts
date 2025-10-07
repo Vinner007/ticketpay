@@ -319,6 +319,7 @@ export function generateMockBookings(count: number = 200): Booking[] {
     const booking: Booking = {
       bookingId: `HW${String(25000 + i).padStart(5, "0")}`,
       confirmationCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      storyTheme: Math.random() > 0.5 ? "cursed-cinema" : "lesson-blood",
       eventDate,
       timeSlot: timeSlots[timeSlotIndex],
       timeSlotTime: timeSlotTimes[timeSlotIndex],
@@ -341,6 +342,11 @@ export function generateMockBookings(count: number = 200): Booking[] {
       paymentStatus,
       qrCodeData: `HW${Date.now()}-${i}`,
       bookingDate,
+      checkInStatus: isCheckedIn ? "checked-in" : "not-checked-in",
+      checkInTime: isCheckedIn ? new Date(Date.now() - Math.random() * 86400000).toISOString() : undefined,
+      checkInBy: isCheckedIn ? "admin@ghoulgate.com" : undefined,
+      source: "website",
+      createdAt: bookingDate,
     };
 
     bookings.push(booking);

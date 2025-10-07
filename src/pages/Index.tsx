@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { DateCard } from "@/components/DateCard";
 import { FeatureCard } from "@/components/FeatureCard";
@@ -24,6 +25,8 @@ import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
 
 const Index = () => {
+  const navigate = useNavigate();
+  
   const scrollToBooking = () => {
     document.getElementById("date-selection")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -152,7 +155,7 @@ const Index = () => {
           </div>
 
           <Button
-            onClick={scrollToBooking}
+            onClick={() => navigate("/select-story")}
             size="lg"
             className="text-xl px-12 py-6 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange animate-bounce-slow"
           >
@@ -176,7 +179,11 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {dates.map((date) => (
-              <DateCard key={date.date} {...date} />
+              <DateCard
+                key={date.date}
+                {...date}
+                onClick={() => navigate("/select-story")}
+              />
             ))}
           </div>
         </div>
