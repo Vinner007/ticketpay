@@ -158,7 +158,7 @@ const Index = () => {
             <Button
               onClick={() => navigate("/select-story")}
               size="lg"
-              className="text-xl px-12 py-6 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange animate-bounce-slow"
+              className="text-xl px-12 py-6 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange"
             >
               จองตั๋วเลย 🎃
             </Button>
