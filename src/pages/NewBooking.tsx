@@ -22,10 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, MapPin, Clock, Info, X, Film } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
-import { getTimeSlotsByDate, storyData, TimeSlot } from "@/lib/Timeslotdata";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
@@ -69,14 +68,37 @@ const dateLabels: Record<string, string> = {
   "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
 };
 
+const timeSlots = [
+  {
+    id: "morning",
+    label: "รอบเช้า",
+    time: "10:00 - 12:00 น.",
+    rounds: "รอบที่ 1-2",
+    description: "เริ่มลงทะเบียน 09:30 น.",
+  },
+  {
+    id: "afternoon",
+    label: "รอบเที่ยง",
+    time: "12:30 - 14:30 น.",
+    rounds: "รอบที่ 3-4",
+    description: "หลังพักเบรก 30 นาที",
+  },
+  {
+    id: "evening",
+    label: "รอบเย็น",
+    time: "15:00 - 17:00 น.",
+    rounds: "รอบที่ 5-6",
+    description: "รอบสุดท้ายของวัน",
+  },
+];
+
 const NewBooking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const selectedDate = searchParams.get("date") || "2025-10-29";
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedStory, setSelectedStory] = useState<number | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [groupSize, setGroupSize] = useState(0);
   const [appliedPromo, setAppliedPromo] = useState<{
     code: string;
@@ -113,23 +135,6 @@ const NewBooking = () => {
   const total = useMemo(() => {
     return subtotal - (appliedPromo?.discount || 0);
   }, [subtotal, appliedPromo]);
-
-  // เช็ค selectedStory จาก localStorage
-  useEffect(() => {
-    const storyId = localStorage.getItem("selectedStory");
-    if (!storyId) {
-      toast.error("กรุณาเลือกเรื่องที่ต้องการเล่นก่อน");
-      navigate("/story-selection");
-    } else {
-      setSelectedStory(parseInt(storyId));
-    }
-  }, [navigate]);
-
-  // ดึงตารางเวลาตามวันที่เลือก
-  const availableTimeSlots = useMemo(() => {
-    if (!selectedDate) return [];
-    return getTimeSlotsByDate(selectedDate);
-  }, [selectedDate]);
 
   useEffect(() => {
     const draft = localStorage.getItem("booking_draft");
@@ -416,6 +421,8 @@ const NewBooking = () => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
+      const selectedSlot = timeSlots.find(slot => slot.id === selectedTimeSlot);
+
       const newBooking: Booking = {
         bookingId: `HW${Date.now().toString().slice(-6)}`,
         confirmationCode: Math.random()
@@ -423,12 +430,8 @@ const NewBooking = () => {
           .substring(2, 10)
           .toUpperCase(),
         eventDate: selectedDate,
-        storyId: selectedStory || undefined,
-        storyName: selectedStory ? storyData[selectedStory as keyof typeof storyData]?.title : undefined,
-        timeSlot: selectedTimeSlot ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}` : "",
-        timeSlotTime: selectedTimeSlot ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}` : "",
-        timeSlotRound: selectedTimeSlot?.round,
-        timeSlotGroup: selectedTimeSlot?.groupNumber,
+        timeSlot: selectedSlot?.label || "",
+        timeSlotTime: selectedSlot?.time || "",
         groupSize,
         ticketPrice: TICKET_PRICE,
         subtotal,
@@ -438,7 +441,7 @@ const NewBooking = () => {
         members,
         paymentMethod,
         paymentStatus: "completed",
-        qrCodeData: `HW${Date.now()}-STORY${selectedStory}`,
+        qrCodeData: `HW${Date.now()}`,
         bookingDate: new Date().toISOString(),
       };
 
@@ -461,7 +464,6 @@ const NewBooking = () => {
     }
   }, [
     selectedDate,
-    selectedStory,
     selectedTimeSlot,
     groupSize,
     subtotal,
@@ -568,17 +570,6 @@ const NewBooking = () => {
                       </h2>
                     </div>
 
-                    {selectedStory && (
-                      <div className="bg-primary/10 border-2 border-primary rounded-lg p-4 mb-4">
-                        <div className="flex items-center gap-2 text-primary">
-                          <Film className="w-5 h-5" />
-                          <span className="font-semibold">
-                            คุณเลือก: {storyData[selectedStory as keyof typeof storyData]?.title}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="bg-primary/10 border-2 border-primary rounded-xl p-4 sm:p-6 md:p-8 text-center">
                       <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-spooky text-primary mb-3 sm:mb-4 leading-tight px-2">
                         {dateLabels[selectedDate]}
@@ -621,50 +612,42 @@ const NewBooking = () => {
                       </h2>
                     </div>
 
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                      {availableTimeSlots.map((slot) => (
-                        !slot.isBreak ? (
-                          <button
-                            key={slot.id}
-                            onClick={() => setSelectedTimeSlot(slot)}
-                            className={`w-full p-4 sm:p-5 rounded-xl border-2 transition-all text-left ${
-                              selectedTimeSlot?.id === slot.id
-                                ? "border-primary bg-primary/10 glow-orange"
-                                : "border-border hover:border-primary/50 bg-card"
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <h3 className="text-lg sm:text-xl font-bold text-primary mb-1">
-                                  รอบที่ {slot.round} • กลุ่มที่ {slot.groupNumber}
-                                </h3>
-                                <p className="text-sm sm:text-base text-foreground font-semibold mb-1">
-                                  {slot.startTime} - {slot.endTime} น.
-                                </p>
-                                <p className="text-xs sm:text-sm text-muted-foreground">
-                                  ระยะเวลา 10 นาที
-                                </p>
-                              </div>
-                              <div
-                                className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                  selectedTimeSlot?.id === slot.id
-                                    ? "border-primary bg-primary"
-                                    : "border-border"
-                                }`}
-                              >
-                                {selectedTimeSlot?.id === slot.id && (
-                                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
-                                )}
-                              </div>
+                    <div className="space-y-3">
+                      {timeSlots.map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => setSelectedTimeSlot(slot.id)}
+                          className={`w-full p-4 sm:p-5 rounded-xl border-2 transition-all text-left ${
+                            selectedTimeSlot === slot.id
+                              ? "border-primary bg-primary/10 glow-orange"
+                              : "border-border hover:border-primary/50 bg-card"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <h3 className="text-lg sm:text-xl font-bold text-primary mb-1">
+                                {slot.label}
+                              </h3>
+                              <p className="text-sm sm:text-base text-foreground font-semibold mb-1">
+                                {slot.time}
+                              </p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                {slot.rounds} • {slot.description}
+                              </p>
                             </div>
-                          </button>
-                        ) : (
-                          <div key={slot.id} className="bg-secondary/10 border border-secondary rounded-lg p-3 text-center">
-                            <p className="text-sm font-semibold text-secondary">
-                              ⏰ {slot.breakType}: {slot.startTime} - {slot.endTime}
-                            </p>
+                            <div
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                selectedTimeSlot === slot.id
+                                  ? "border-primary bg-primary"
+                                  : "border-border"
+                              }`}
+                            >
+                              {selectedTimeSlot === slot.id && (
+                                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
+                              )}
+                            </div>
                           </div>
-                        )
+                        </button>
                       ))}
                     </div>
 
@@ -855,8 +838,7 @@ const NewBooking = () => {
               <div className="lg:col-span-1 hidden lg:block">
                 <BookingSidebar
                   selectedDate={selectedDate}
-                  selectedTimeSlot={selectedTimeSlot ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}` : undefined}
-                  selectedStory={selectedStory ? storyData[selectedStory as keyof typeof storyData]?.title : undefined}
+                  selectedTimeSlot={timeSlots.find(s => s.id === selectedTimeSlot)?.label}
                   groupSize={groupSize}
                   ticketPrice={TICKET_PRICE}
                   appliedPromo={appliedPromo}
@@ -889,14 +871,6 @@ const NewBooking = () => {
 
                     <div className="space-y-4">
                       <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2">
-                        {selectedStory && (
-                          <div className="flex justify-between text-sm sm:text-base">
-                            <span className="text-muted-foreground">เรื่อง:</span>
-                            <span className="font-semibold text-right">
-                              {storyData[selectedStory as keyof typeof storyData]?.title}
-                            </span>
-                          </div>
-                        )}
                         <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-muted-foreground">วันที่:</span>
                           <span className="font-semibold text-right">
@@ -904,9 +878,9 @@ const NewBooking = () => {
                           </span>
                         </div>
                         <div className="flex justify-between text-sm sm:text-base">
-                          <span className="text-muted-foreground">เวลา:</span>
+                          <span className="text-muted-foreground">รอบเวลา:</span>
                           <span className="font-semibold text-right">
-                            {selectedTimeSlot ? `${selectedTimeSlot.startTime} - ${selectedTimeSlot.endTime}` : "-"}
+                            {timeSlots.find(s => s.id === selectedTimeSlot)?.label}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm sm:text-base">
