@@ -26,10 +26,6 @@ import gallery3 from "@/assets/gallery-3.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
-  
-  const scrollToBooking = () => {
-    document.getElementById("date-selection")?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const features = [
     {
@@ -154,21 +150,13 @@ const Index = () => {
             <CountdownTimer />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex justify-center">
             <Button
               onClick={() => navigate("/select-story")}
               size="lg"
               className="text-2xl px-16 py-8 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange font-bold shadow-2xl"
             >
               จองตั๋วเลย 🎃
-            </Button>
-            <Button
-              onClick={scrollToBooking}
-              size="sm"
-              variant="outline"
-              className="text-base px-8 py-4 border-2 border-primary hover:bg-primary/10"
-            >
-              ดูรายละเอียด 👻
             </Button>
           </div>
         </div>
