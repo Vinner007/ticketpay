@@ -154,19 +154,19 @@ const Index = () => {
             <CountdownTimer />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               onClick={() => navigate("/select-story")}
               size="lg"
-              className="text-xl px-12 py-6 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange"
+              className="text-2xl px-16 py-8 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange font-bold shadow-2xl"
             >
               จองตั๋วเลย 🎃
             </Button>
             <Button
               onClick={scrollToBooking}
-              size="lg"
+              size="sm"
               variant="outline"
-              className="text-xl px-12 py-6 border-2 border-primary hover:bg-primary/10"
+              className="text-base px-8 py-4 border-2 border-primary hover:bg-primary/10"
             >
               ดูรายละเอียด 👻
             </Button>
