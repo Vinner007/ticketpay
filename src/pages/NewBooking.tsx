@@ -68,35 +68,182 @@ const dateLabels: Record<string, string> = {
   "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
 };
 
-const timeSlots = [
-  {
-    id: "morning",
-    label: "รอบเช้า",
-    time: "10:00 - 12:00 น.",
-    rounds: "รอบที่ 1-2",
-    description: "เริ่มลงทะเบียน 09:30 น.",
-  },
-  {
-    id: "afternoon",
-    label: "รอบเที่ยง",
-    time: "12:30 - 14:30 น.",
-    rounds: "รอบที่ 3-4",
-    description: "หลังพักเบรก 30 นาที",
-  },
-  {
-    id: "evening",
-    label: "รอบเย็น",
-    time: "15:00 - 17:00 น.",
-    rounds: "รอบที่ 5-6",
-    description: "รอบสุดท้ายของวัน",
-  },
-];
-
 const NewBooking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const selectedStory = searchParams.get("story") as "cursed-cinema" | "lesson-blood" || "cursed-cinema";
   const selectedDate = searchParams.get("date") || "2025-10-29";
+
+  // Generate detailed time slots based on selected date
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    const baseSlots = [
+      // รอบ 1
+      { start: "10:00", end: "10:10", group: 1, round: 1 },
+      { start: "10:10", end: "10:20", group: 2, round: 1 },
+      { start: "10:20", end: "10:30", group: 3, round: 1 },
+      { start: "10:30", end: "10:40", group: 4, round: 1 },
+      { start: "10:40", end: "10:50", group: 5, round: 1 },
+      { start: "10:50", end: "11:00", group: 6, round: 1 },
+      // รอบ 2
+      { start: "11:00", end: "11:10", group: 1, round: 2 },
+      { start: "11:10", end: "11:20", group: 2, round: 2 },
+      { start: "11:20", end: "11:30", group: 3, round: 2 },
+      { start: "11:30", end: "11:40", group: 4, round: 2 },
+      { start: "11:40", end: "11:50", group: 5, round: 2 },
+      { start: "11:50", end: "12:00", group: 6, round: 2 },
+      // พักเบรก 12:00 - 12:30
+      // รอบ 3
+      { start: "12:30", end: "12:40", group: 1, round: 3 },
+      { start: "12:40", end: "12:50", group: 2, round: 3 },
+      { start: "12:50", end: "13:00", group: 3, round: 3 },
+    ];
+
+    // For Oct 30, add special event slot
+    if (selectedDate === "2025-10-30") {
+      slots.push(...baseSlots);
+      // พิธีเปิดงาน 13:00 - 13:30
+      slots.push(
+        { start: "13:30", end: "13:40", group: 4, round: 3 },
+        { start: "13:40", end: "13:50", group: 5, round: 3 },
+        { start: "13:50", end: "14:00", group: 6, round: 3 },
+        // รอบ 4
+        { start: "14:00", end: "14:10", group: 1, round: 4 },
+        { start: "14:10", end: "14:20", group: 2, round: 4 },
+        { start: "14:20", end: "14:30", group: 3, round: 4 },
+        // พักเบรก 14:30 - 15:00
+      );
+    } else {
+      // Normal schedule for Oct 29 & 31
+      slots.push(...baseSlots);
+      slots.push(
+        { start: "13:00", end: "13:10", group: 4, round: 3 },
+        { start: "13:10", end: "13:20", group: 5, round: 3 },
+        { start: "13:20", end: "13:30", group: 6, round: 3 },
+        // รอบ 4
+        { start: "13:30", end: "13:40", group: 1, round: 4 },
+        { start: "13:40", end: "13:50", group: 2, round: 4 },
+        { start: "13:50", end: "14:00", group: 3, round: 4 },
+        { start: "14:00", end: "14:10", group: 4, round: 4 },
+        { start: "14:10", end: "14:20", group: 5, round: 4 },
+        { start: "14:20", end: "14:30", group: 6, round: 4 },
+        // พักเบรก 14:30 - 15:00
+      );
+    }
+
+    // รอบ 5 & 6 เหมือนกันทุกวัน
+    slots.push(
+      // รอบ 5
+      { start: "15:00", end: "15:10", group: 1, round: 5 },
+      { start: "15:10", end: "15:20", group: 2, round: 5 },
+      { start: "15:20", end: "15:30", group: 3, round: 5 },
+      { start: "15:30", end: "15:40", group: 4, round: 5 },
+      { start: "15:40", end: "15:50", group: 5, round: 5 },
+      { start: "15:50", end: "16:00", group: 6, round: 5 },
+      // รอบ 6
+      { start: "16:00", end: "16:10", group: 1, round: 6 },
+      { start: "16:10", end: "16:20", group: 2, round: 6 },
+      { start: "16:20", end: "16:30", group: 3, round: 6 },
+      { start: "16:30", end: "16:40", group: 4, round: 6 },
+      { start: "16:40", end: "16:50", group: 5, round: 6 },
+      { start: "16:50", end: "17:00", group: 6, round: 6 }
+    );
+
+    return slots.map((slot, index) => ({
+      id: `slot-${index}`,
+      label: `${slot.start} - ${slot.end}`,
+      time: `${slot.start} - ${slot.end} น.`,
+      group: slot.group,
+      round: slot.round,
+      description: `กลุ่มที่ ${slot.group} | รอบที่ ${slot.round}`,
+      fullLabel: `เวลา ${slot.start} - ${slot.end} (กลุ่ม ${slot.group}, รอบ ${slot.round})`
+    }));
+  }, [selectedDate]);
+
+  const [currentStep, setCurrentStep] = useState(1);
+    const slots = [];
+    const baseSlots = [
+      // รอบ 1
+      { start: "10:00", end: "10:10", group: 1, round: 1 },
+      { start: "10:10", end: "10:20", group: 2, round: 1 },
+      { start: "10:20", end: "10:30", group: 3, round: 1 },
+      { start: "10:30", end: "10:40", group: 4, round: 1 },
+      { start: "10:40", end: "10:50", group: 5, round: 1 },
+      { start: "10:50", end: "11:00", group: 6, round: 1 },
+      // รอบ 2
+      { start: "11:00", end: "11:10", group: 1, round: 2 },
+      { start: "11:10", end: "11:20", group: 2, round: 2 },
+      { start: "11:20", end: "11:30", group: 3, round: 2 },
+      { start: "11:30", end: "11:40", group: 4, round: 2 },
+      { start: "11:40", end: "11:50", group: 5, round: 2 },
+      { start: "11:50", end: "12:00", group: 6, round: 2 },
+      // พักเบรก 12:00 - 12:30
+      // รอบ 3
+      { start: "12:30", end: "12:40", group: 1, round: 3 },
+      { start: "12:40", end: "12:50", group: 2, round: 3 },
+      { start: "12:50", end: "13:00", group: 3, round: 3 },
+    ];
+
+    // For Oct 30, add special event slot
+    if (selectedDate === "2025-10-30") {
+      slots.push(...baseSlots);
+      // พิธีเปิดงาน 13:00 - 13:30
+      slots.push(
+        { start: "13:30", end: "13:40", group: 4, round: 3 },
+        { start: "13:40", end: "13:50", group: 5, round: 3 },
+        { start: "13:50", end: "14:00", group: 6, round: 3 },
+        // รอบ 4
+        { start: "14:00", end: "14:10", group: 1, round: 4 },
+        { start: "14:10", end: "14:20", group: 2, round: 4 },
+        { start: "14:20", end: "14:30", group: 3, round: 4 },
+        // พักเบรก 14:30 - 15:00
+      );
+    } else {
+      // Normal schedule for Oct 29 & 31
+      slots.push(...baseSlots);
+      slots.push(
+        { start: "13:00", end: "13:10", group: 4, round: 3 },
+        { start: "13:10", end: "13:20", group: 5, round: 3 },
+        { start: "13:20", end: "13:30", group: 6, round: 3 },
+        // รอบ 4
+        { start: "13:30", end: "13:40", group: 1, round: 4 },
+        { start: "13:40", end: "13:50", group: 2, round: 4 },
+        { start: "13:50", end: "14:00", group: 3, round: 4 },
+        { start: "14:00", end: "14:10", group: 4, round: 4 },
+        { start: "14:10", end: "14:20", group: 5, round: 4 },
+        { start: "14:20", end: "14:30", group: 6, round: 4 },
+        // พักเบรก 14:30 - 15:00
+      );
+    }
+
+    // รอบ 5 & 6 เหมือนกันทุกวัน
+    slots.push(
+      // รอบ 5
+      { start: "15:00", end: "15:10", group: 1, round: 5 },
+      { start: "15:10", end: "15:20", group: 2, round: 5 },
+      { start: "15:20", end: "15:30", group: 3, round: 5 },
+      { start: "15:30", end: "15:40", group: 4, round: 5 },
+      { start: "15:40", end: "15:50", group: 5, round: 5 },
+      { start: "15:50", end: "16:00", group: 6, round: 5 },
+      // รอบ 6
+      { start: "16:00", end: "16:10", group: 1, round: 6 },
+      { start: "16:10", end: "16:20", group: 2, round: 6 },
+      { start: "16:20", end: "16:30", group: 3, round: 6 },
+      { start: "16:30", end: "16:40", group: 4, round: 6 },
+      { start: "16:40", end: "16:50", group: 5, round: 6 },
+      { start: "16:50", end: "17:00", group: 6, round: 6 }
+    );
+
+    return slots.map((slot, index) => ({
+      id: `slot-${index}`,
+      label: `${slot.start} - ${slot.end}`,
+      time: `${slot.start} - ${slot.end} น.`,
+      group: slot.group,
+      round: slot.round,
+      description: `กลุ่มที่ ${slot.group} | รอบที่ ${slot.round}`,
+      fullLabel: `เวลา ${slot.start} - ${slot.end} (กลุ่ม ${slot.group}, รอบ ${slot.round})`
+    }));
+  }, [selectedDate]);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
@@ -432,7 +579,7 @@ const NewBooking = () => {
           .toUpperCase(),
         storyTheme: selectedStory,
         eventDate: selectedDate,
-        timeSlot: selectedSlot?.label || "",
+        timeSlot: selectedSlot?.fullLabel || "",
         timeSlotTime: selectedSlot?.time || "",
         groupSize,
         ticketPrice: TICKET_PRICE,
@@ -637,7 +784,7 @@ const NewBooking = () => {
                                 {slot.time}
                               </p>
                               <p className="text-xs sm:text-sm text-muted-foreground">
-                                {slot.rounds} • {slot.description}
+                                {slot.description}
                               </p>
                             </div>
                             <div
