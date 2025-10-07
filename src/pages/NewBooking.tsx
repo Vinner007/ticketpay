@@ -1,1173 +1,1008 @@
-import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { SpiderWeb } from "@/components/SpiderWeb";
+import { AnimatedBats } from "@/components/AnimatedBats";
+import { BookingProgress } from "@/components/BookingProgress";
+import { BookingSidebar } from "@/components/BookingSidebar";
+import { GroupSizeSelector } from "@/components/GroupSizeSelector";
+import { MemberForm } from "@/components/MemberForm";
+import { PaymentMethods } from "@/components/PaymentMethods";
+import { ConfirmationSuccess } from "@/components/ConfirmationSuccess";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Search,
-  Filter,
-  Download,
-  RefreshCw,
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Mail,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  DollarSign,
-  Users,
-  Calendar,
-  TrendingUp,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  QrCode,
-  Clock,
-  Printer,
-  History,
-  AlertCircle,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Booking } from "@/types/booking";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
+import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 
-type SortField = 'bookingId' | 'leader' | 'eventDate' | 'groupSize' | 'totalPrice' | 'paymentStatus' | 'createdAt';
-type SortOrder = 'asc' | 'desc';
+const TICKET_PRICE = 80;
+const PAYMENT_TIME_LIMIT = 15 * 60;
 
-export const Bookings = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedSize, setSelectedSize] = useState("all");
-  const [selectedPayment, setSelectedPayment] = useState("all");
-  const [selectedCheckIn, setSelectedCheckIn] = useState("all");
-  const [selectedSource, setSelectedSource] = useState("all");
-  const [selectedBookings, setSelectedBookings] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<SortField>('createdAt');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const itemsPerPage = 20;
+const PROMO_CODES = [
+  {
+    code: "HALLOWEEN10",
+    type: "percentage" as const,
+    value: 10,
+    minPurchase: 0,
+    maxDiscount: 100,
+    description: "ลด 10%",
+  },
+  {
+    code: "EARLYBIRD",
+    type: "fixed" as const,
+    value: 50,
+    minPurchase: 400,
+    description: "ลดทันที 50 บาท",
+  },
+  {
+    code: "SCARY20",
+    type: "percentage" as const,
+    value: 20,
+    minPurchase: 560,
+    maxDiscount: 150,
+    description: "ลด 20%",
+  },
+  {
+    code: "GROUP7FOR6",
+    type: "fixed" as const,
+    value: 80,
+    minPurchase: 560,
+    description: "โปรโมชั่น มา 7 จ่าย 6",
+  },
+];
 
-  // Modal states
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'edit' | 'notes' | 'activity'>('details');
-  const [showCheckInDialog, setShowCheckInDialog] = useState(false);
-  const [showRefundDialog, setShowRefundDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+const dateLabels: Record<string, string> = {
+  "2025-10-29": "29 ตุลาคม 2568 (วันพุธ)",
+  "2025-10-30": "30 ตุลาคม 2568 (วันพฤหัสบดี)",
+  "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
+};
 
-  // Edit form state
-  const [editForm, setEditForm] = useState({
-    eventDate: '',
-    groupSize: 5,
-    leader: { firstName: '', lastName: '', email: '', phone: '', age: 18, lineId: '' },
-    paymentStatus: 'pending' as const,
-    adminNotes: '',
+const timeSlots = [
+  {
+    id: "morning",
+    label: "รอบเช้า",
+    time: "10:00 - 12:00 น.",
+    rounds: "รอบที่ 1-2",
+    description: "เริ่มลงทะเบียน 09:30 น.",
+  },
+  {
+    id: "afternoon",
+    label: "รอบเที่ยง",
+    time: "12:30 - 14:30 น.",
+    rounds: "รอบที่ 3-4",
+    description: "หลังพักเบรก 30 นาที",
+  },
+  {
+    id: "evening",
+    label: "รอบเย็น",
+    time: "15:00 - 17:00 น.",
+    rounds: "รอบที่ 5-6",
+    description: "รอบสุดท้ายของวัน",
+  },
+];
+
+const NewBooking = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const selectedDate = searchParams.get("date") || "2025-10-29";
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
+  const [groupSize, setGroupSize] = useState(0);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discount: number;
+  }>();
+  const [leader, setLeader] = useState<Leader>({
+    firstName: "",
+    lastName: "",
+    nickname: "",
+    email: "",
+    phone: "",
+    age: 0,
+    lineId: "",
   });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<"credit-card" | "promptpay" | "bank-transfer">("promptpay");
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(PAYMENT_TIME_LIMIT);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
 
-  const [adminNotes, setAdminNotes] = useState('');
-  const [refundReason, setRefundReason] = useState('');
+  const [errors, setErrors] = useState<{
+    leader?: { [key: string]: string };
+    members?: { [key: number]: { [key: string]: string } };
+  }>({});
+
+  const subtotal = useMemo(() => {
+    return groupSize * TICKET_PRICE;
+  }, [groupSize]);
+
+  const total = useMemo(() => {
+    return subtotal - (appliedPromo?.discount || 0);
+  }, [subtotal, appliedPromo]);
 
   useEffect(() => {
-    loadBookings();
+    const draft = localStorage.getItem("booking_draft");
+    if (draft) {
+      try {
+        const data = JSON.parse(draft);
+        setShowDraftBanner(true);
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+    }
   }, []);
 
-  const loadBookings = () => {
-    const data = localStorage.getItem("admin_bookings");
-    if (data) {
-      setBookings(JSON.parse(data));
+  useEffect(() => {
+    if (currentStep > 1 && currentStep < 6) {
+      const draftData = {
+        selectedDate,
+        selectedTimeSlot,
+        currentStep,
+        groupSize,
+        leader,
+        members,
+        appliedPromo,
+        paymentMethod,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem("booking_draft", JSON.stringify(draftData));
     }
-  };
+  }, [
+    selectedDate,
+    selectedTimeSlot,
+    currentStep,
+    groupSize,
+    leader,
+    members,
+    appliedPromo,
+    paymentMethod,
+  ]);
 
-  // Stats calculation
-  const stats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayBookings = bookings.filter(b => b.eventDate === today);
-    const totalRevenue = bookings.filter(b => b.paymentStatus === 'completed').reduce((sum, b) => sum + b.totalPrice, 0);
-    const pendingPayments = bookings.filter(b => b.paymentStatus === 'pending').length;
-    const checkedIn = bookings.filter(b => b.checkInStatus).length;
-    const checkInRate = bookings.length > 0 ? (checkedIn / bookings.length) * 100 : 0;
+  useEffect(() => {
+    if (groupSize > 0) {
+      const requiredMembers = groupSize - 1;
+      const newMembers = Array.from({ length: requiredMembers }, (_, i) => ({
+        id: i + 1,
+        firstName: members[i]?.firstName || "",
+        lastName: members[i]?.lastName || "",
+        nickname: members[i]?.nickname || "",
+        age: members[i]?.age || 0,
+      }));
+      setMembers(newMembers);
+    }
+  }, [groupSize]);
 
-    return {
-      todayBookings: todayBookings.length,
-      totalRevenue,
-      pendingPayments,
-      checkInRate: checkInRate.toFixed(1),
+  useEffect(() => {
+    if (currentStep === 5 && timeRemaining > 0) {
+      const timer = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            toast.error("หมดเวลาชำระเงิน กรุณาทำรายการใหม่");
+            setTimeout(() => navigate("/"), 2000);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [currentStep, timeRemaining, navigate]);
+
+  useEffect(() => {
+    if (currentStep === 5) {
+      setTimeRemaining(PAYMENT_TIME_LIMIT);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && currentStep > 1 && currentStep < 6) {
+        setCurrentStep((prev) => prev - 1);
+      }
+
+      if (e.ctrlKey && e.key === "Enter" && currentStep < 5) {
+        if (currentStep === 1) {
+          setCurrentStep(2);
+        } else if (currentStep === 2 && selectedTimeSlot) {
+          setCurrentStep(3);
+        } else if (currentStep === 3 && canProceedFromStep3) {
+          handleGroupSizeNext();
+        } else if (currentStep === 4 && canProceedFromStep4) {
+          handleMemberFormNext();
+        }
+      }
     };
-  }, [bookings]);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [currentStep, selectedTimeSlot]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleRestoreDraft = useCallback(() => {
+    const draft = localStorage.getItem("booking_draft");
+    if (draft) {
+      const data = JSON.parse(draft);
+      setCurrentStep(data.currentStep);
+      setSelectedTimeSlot(data.selectedTimeSlot);
+      setGroupSize(data.groupSize);
+      setLeader(data.leader);
+      setMembers(data.members);
+      setAppliedPromo(data.appliedPromo);
+      setPaymentMethod(data.paymentMethod);
+      setShowDraftBanner(false);
+      toast.success("โหลดแบบร่างสำเร็จ");
     }
-  };
+  }, []);
 
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
-    return sortOrder === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />;
-  };
+  const handleClearDraft = useCallback(() => {
+    localStorage.removeItem("booking_draft");
+    setShowDraftBanner(false);
+    toast.success("ลบแบบร่างแล้ว");
+  }, []);
 
-  const sortedBookings = useMemo(() => {
-    return [...bookings].sort((a, b) => {
-      let aVal: any, bVal: any;
-      
-      switch (sortField) {
-        case 'bookingId':
-          aVal = a.bookingId;
-          bVal = b.bookingId;
-          break;
-        case 'leader':
-          aVal = `${a.leader.firstName} ${a.leader.lastName}`;
-          bVal = `${b.leader.firstName} ${b.leader.lastName}`;
-          break;
-        case 'eventDate':
-          aVal = a.eventDate;
-          bVal = b.eventDate;
-          break;
-        case 'groupSize':
-          aVal = a.groupSize;
-          bVal = b.groupSize;
-          break;
-        case 'totalPrice':
-          aVal = a.totalPrice;
-          bVal = b.totalPrice;
-          break;
-        case 'paymentStatus':
-          aVal = a.paymentStatus;
-          bVal = b.paymentStatus;
-          break;
-        case 'createdAt':
-          aVal = a.createdAt || new Date().toISOString();
-          bVal = b.createdAt || new Date().toISOString();
-          break;
-        default:
-          return 0;
+  const handleDateChange = useCallback(() => {
+    if (currentStep > 1) {
+      setShowCancelDialog(true);
+    } else {
+      navigate("/");
+    }
+  }, [currentStep, navigate]);
+
+  const handleConfirmCancel = useCallback(() => {
+    localStorage.removeItem("booking_draft");
+    navigate("/");
+  }, [navigate]);
+
+  const validatePromoCode = useCallback(
+    (code: string) => {
+      const promo = PROMO_CODES.find(
+        (p) => p.code.toUpperCase() === code.toUpperCase()
+      );
+
+      if (!promo) {
+        return { error: "❌ รหัสไม่ถูกต้อง กรุณาลองใหม่" };
       }
 
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [bookings, sortField, sortOrder]);
-
-  const filteredBookings = useMemo(() => {
-    return sortedBookings.filter((booking) => {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-          booking.bookingId.toLowerCase().includes(query) ||
-          booking.leader.firstName.toLowerCase().includes(query) ||
-          booking.leader.lastName.toLowerCase().includes(query) ||
-          booking.leader.email.toLowerCase().includes(query) ||
-          booking.leader.phone.includes(query);
-        
-        if (!matchesSearch) return false;
+      if (promo.minPurchase && subtotal < promo.minPurchase) {
+        return {
+          error: `❌ ใช้ได้กับยอดขั้นต่ำ ${promo.minPurchase} บาท`,
+        };
       }
 
-      if (selectedDate !== "all" && booking.eventDate !== selectedDate) return false;
-      
-      if (selectedStatus !== "all") {
-        if (selectedStatus === "paid" && booking.paymentStatus !== "completed") return false;
-        if (selectedStatus === "pending" && booking.paymentStatus !== "pending") return false;
-        if (selectedStatus === "cancelled" && booking.paymentStatus !== "failed") return false;
+      let discount = 0;
+      if (promo.type === "percentage") {
+        discount = Math.floor((subtotal * promo.value) / 100);
+        if (promo.maxDiscount) {
+          discount = Math.min(discount, promo.maxDiscount);
+        }
+      } else {
+        discount = promo.value;
       }
 
-      if (selectedSize !== "all" && booking.groupSize !== parseInt(selectedSize)) return false;
-      if (selectedPayment !== "all" && booking.paymentMethod !== selectedPayment) return false;
-      
-      if (selectedCheckIn !== "all") {
-        if (selectedCheckIn === "checked-in" && !booking.checkInStatus) return false;
-        if (selectedCheckIn === "not-checked-in" && booking.checkInStatus) return false;
+      return { discount, code: promo.code };
+    },
+    [subtotal]
+  );
+
+  const handleApplyPromo = useCallback(
+    (code: string) => {
+      const result = validatePromoCode(code);
+      if ("error" in result) {
+        toast.error(result.error);
+        return false;
       }
 
-      if (selectedSource !== "all" && booking.source !== selectedSource) return false;
-
+      setAppliedPromo({ code: result.code, discount: result.discount });
+      setPromoInput("");
+      toast.success(`✅ ใช้โค้ด ${result.code} สำเร็จ! ลด ${result.discount} บาท`);
       return true;
+    },
+    [validatePromoCode]
+  );
+
+  const handleRemovePromo = useCallback(() => {
+    setAppliedPromo(undefined);
+    toast.info("ลบโค้ดส่วนลดแล้ว");
+  }, []);
+
+  const validateLeader = useCallback(() => {
+    const newErrors: any = {};
+
+    if (!leader.firstName?.trim()) {
+      newErrors.firstName = "กรุณากรอกชื่อ";
+    }
+
+    if (!leader.lastName?.trim()) {
+      newErrors.lastName = "กรุณากรอกนามสกุล";
+    }
+
+    if (!leader.email.trim()) {
+      newErrors.email = "กรุณากรอกอีเมล";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leader.email)) {
+      newErrors.email = "รูปแบบอีเมลไม่ถูกต้อง (example@email.com)";
+    }
+
+    if (!leader.phone.trim()) {
+      newErrors.phone = "กรุณากรอกเบอร์โทร";
+    } else if (!/^[0-9]{10}$/.test(leader.phone.replace(/-/g, ""))) {
+      newErrors.phone = "เบอร์โทรต้องเป็นตัวเลข 10 หลัก";
+    }
+
+    if (!leader.age || leader.age < 5 || leader.age > 100) {
+      newErrors.age = "กรุณากรอกอายุที่ถูกต้อง (5-100 ปี)";
+    }
+
+    setErrors((prev) => ({ ...prev, leader: newErrors }));
+    return Object.keys(newErrors).length === 0;
+  }, [leader]);
+
+  const validateMembers = useCallback(() => {
+    const memberErrors: any = {};
+    let isValid = true;
+
+    members.forEach((member, index) => {
+      const errors: any = {};
+
+      if (!member.firstName?.trim()) {
+        errors.firstName = "กรุณากรอกชื่อ";
+        isValid = false;
+      }
+
+      if (!member.lastName?.trim()) {
+        errors.lastName = "กรุณากรอกนามสกุล";
+        isValid = false;
+      }
+
+      if (!member.age || member.age < 5 || member.age > 100) {
+        errors.age = "กรุณากรอกอายุที่ถูกต้อง (5-100 ปี)";
+        isValid = false;
+      }
+
+      if (Object.keys(errors).length > 0) {
+        memberErrors[index] = errors;
+      }
     });
-  }, [sortedBookings, searchQuery, selectedDate, selectedStatus, selectedSize, selectedPayment, selectedCheckIn, selectedSource]);
 
-  const paginatedBookings = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredBookings, currentPage]);
+    setErrors((prev) => ({ ...prev, members: memberErrors }));
+    return isValid;
+  }, [members]);
 
-  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-success">ชำระแล้ว</Badge>;
-      case "pending":
-        return <Badge variant="secondary">รอชำระ</Badge>;
-      case "failed":
-        return <Badge variant="destructive">ยกเลิก</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+  const validateMemberForm = useCallback(() => {
+    if (!leader.firstName || !leader.lastName || !leader.email || !leader.phone || !leader.age) {
+      return false;
     }
-  };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedBookings(new Set(paginatedBookings.map(b => b.bookingId)));
+    const validMembers = members.filter((m) => m.firstName && m.lastName && m.age > 0);
+    return validMembers.length === members.length;
+  }, [leader, members]);
+
+  const handleGroupSizeNext = useCallback(() => {
+    if (groupSize >= 5 && groupSize <= 7) {
+      setCurrentStep(4);
+    }
+  }, [groupSize]);
+
+  const handleMemberFormNext = useCallback(() => {
+    const leaderValid = validateLeader();
+    const membersValid = validateMembers();
+
+    if (leaderValid && membersValid) {
+      setCurrentStep(5);
     } else {
-      setSelectedBookings(new Set());
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
     }
-  };
+  }, [validateLeader, validateMembers]);
 
-  const handleSelectBooking = (bookingId: string, checked: boolean) => {
-    const newSelected = new Set(selectedBookings);
-    if (checked) {
-      newSelected.add(bookingId);
-    } else {
-      newSelected.delete(bookingId);
-    }
-    setSelectedBookings(newSelected);
-  };
+  const handlePaymentComplete = useCallback(async () => {
+    setIsProcessing(true);
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedDate("all");
-    setSelectedStatus("all");
-    setSelectedSize("all");
-    setSelectedPayment("all");
-    setSelectedCheckIn("all");
-    setSelectedSource("all");
-    setCurrentPage(1);
-    toast.success("ล้างตัวกรองแล้ว");
-  };
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  const handleViewBooking = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setActiveTab('details');
-    setShowViewModal(true);
-  };
+      const selectedSlot = timeSlots.find(slot => slot.id === selectedTimeSlot);
 
-  const handleEditBooking = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setEditForm({
-      eventDate: booking.eventDate,
-      groupSize: booking.groupSize,
-      leader: { ...booking.leader },
-      paymentStatus: booking.paymentStatus,
-      adminNotes: booking.adminNotes || '',
-    });
-    setActiveTab('edit');
-    setShowViewModal(true);
-  };
+      const newBooking: Booking = {
+        bookingId: `HW${Date.now().toString().slice(-6)}`,
+        confirmationCode: Math.random()
+          .toString(36)
+          .substring(2, 10)
+          .toUpperCase(),
+        eventDate: selectedDate,
+        timeSlot: selectedSlot?.label || "",
+        timeSlotTime: selectedSlot?.time || "",
+        groupSize,
+        ticketPrice: TICKET_PRICE,
+        subtotal,
+        promoCode: appliedPromo,
+        totalPrice: total,
+        leader,
+        members,
+        paymentMethod,
+        paymentStatus: "completed",
+        qrCodeData: `HW${Date.now()}`,
+        bookingDate: new Date().toISOString(),
+      };
 
-  const handleCheckIn = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setShowCheckInDialog(true);
-  };
-
-  const confirmCheckIn = () => {
-    if (selectedBooking) {
-      const updated = bookings.map(b => 
-        b.bookingId === selectedBooking.bookingId 
-          ? { ...b, checkInStatus: true, checkInTime: new Date().toISOString() }
-          : b
+      const existingBookings = JSON.parse(
+        localStorage.getItem("bookings") || "[]"
       );
-      setBookings(updated);
-      localStorage.setItem('admin_bookings', JSON.stringify(updated));
-      toast.success(`เช็คอิน ${selectedBooking.bookingId} สำเร็จ`);
-      setShowCheckInDialog(false);
-      setShowViewModal(false);
+      existingBookings.push(newBooking);
+      localStorage.setItem("bookings", JSON.stringify(existingBookings));
+
+      localStorage.removeItem("booking_draft");
+
+      setBooking(newBooking);
+      setCurrentStep(6);
+      toast.success("🎉 จองสำเร็จ! เตรียมตัวสนุกกับงาน Halloween กันเถอะ!");
+    } catch (error) {
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+      console.error("Payment error:", error);
+    } finally {
+      setIsProcessing(false);
     }
-  };
+  }, [
+    selectedDate,
+    selectedTimeSlot,
+    groupSize,
+    subtotal,
+    total,
+    appliedPromo,
+    leader,
+    members,
+    paymentMethod,
+  ]);
 
-  const handleRefund = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setRefundReason('');
-    setShowRefundDialog(true);
-  };
-
-  const confirmRefund = () => {
-    if (selectedBooking && refundReason.trim()) {
-      const updated = bookings.map(b => 
-        b.bookingId === selectedBooking.bookingId 
-          ? { ...b, paymentStatus: 'failed' as const, cancellationReason: refundReason }
-          : b
-      );
-      setBookings(updated);
-      localStorage.setItem('admin_bookings', JSON.stringify(updated));
-      toast.success(`คืนเงิน ${selectedBooking.bookingId} สำเร็จ`);
-      setShowRefundDialog(false);
-      setShowViewModal(false);
-    } else {
-      toast.error('กรุณาระบุเหตุผลการคืนเงิน');
-    }
-  };
-
-  const handleDelete = (booking: Booking) => {
-    setSelectedBooking(booking);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = () => {
-    if (selectedBooking) {
-      const updated = bookings.filter(b => b.bookingId !== selectedBooking.bookingId);
-      setBookings(updated);
-      localStorage.setItem('admin_bookings', JSON.stringify(updated));
-      toast.success(`ลบการจอง ${selectedBooking.bookingId} สำเร็จ`);
-      setShowDeleteDialog(false);
-      setShowViewModal(false);
-    }
-  };
-
-  const handleDownloadQR = (booking: Booking) => {
-    toast.success(`กำลังดาวน์โหลด QR Code สำหรับ ${booking.bookingId}`);
-    // Implementation for QR download would go here
-  };
-
-  const handlePrint = (booking: Booking) => {
-    toast.success(`กำลังเตรียมพิมพ์รายละเอียดการจอง ${booking.bookingId}`);
-    // Implementation for print would go here
-  };
-
-  const handleSaveEdit = () => {
-    if (selectedBooking) {
-      const updated = bookings.map(b => 
-        b.bookingId === selectedBooking.bookingId 
-          ? { ...b, ...editForm, updatedAt: new Date().toISOString() }
-          : b
-      );
-      setBookings(updated);
-      localStorage.setItem('admin_bookings', JSON.stringify(updated));
-      toast.success(`แก้ไขการจอง ${selectedBooking.bookingId} สำเร็จ`);
-      setShowViewModal(false);
-    }
-  };
-
-  const handleSaveNotes = () => {
-    if (selectedBooking) {
-      const updated = bookings.map(b => 
-        b.bookingId === selectedBooking.bookingId 
-          ? { ...b, adminNotes: adminNotes }
-          : b
-      );
-      setBookings(updated);
-      localStorage.setItem('admin_bookings', JSON.stringify(updated));
-      toast.success('บันทึกหมายเหตุสำเร็จ');
-    }
-  };
-
-  const mockActivityLog = [
-    { timestamp: '2025-10-05 14:30', admin: 'Admin', action: 'Created booking', details: 'Initial booking created' },
-    { timestamp: '2025-10-05 14:35', admin: 'Admin', action: 'Payment confirmed', details: 'PromptPay payment received' },
-  ];
+  const canProceedFromStep3 = useMemo(
+    () => groupSize >= 5 && groupSize <= 7,
+    [groupSize]
+  );
+  const canProceedFromStep4 = useMemo(
+    () => validateMemberForm(),
+    [validateMemberForm]
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">จองวันนี้</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.todayBookings}</div>
-            <p className="text-xs text-muted-foreground">การจองใหม่</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">รายได้รวม</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">฿{stats.totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">จากการจองทั้งหมด</p>
-          </CardContent>
-        </Card>
+    <div className="relative min-h-screen py-12 sm:py-16 md:py-20">
+      <AnimatedBats />
+      <SpiderWeb position="top-left" />
+      <SpiderWeb position="top-right" />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">รอชำระ</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingPayments}</div>
-            <p className="text-xs text-muted-foreground">รายการรอชำระเงิน</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">เช็คอินแล้ว</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.checkInRate}%</div>
-            <p className="text-xs text-muted-foreground">อัตราการเช็คอิน</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold">จัดการการจอง</h2>
-          <p className="text-muted-foreground">
-            พบ {filteredBookings.length} รายการ
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={loadBookings}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <Button className="gap-2 bg-primary">
-            <Plus className="h-4 w-4" />
-            New Booking
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="ค้นหา ID, ชื่อ, อีเมล, เบอร์โทร..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 max-w-7xl">
+        {showDraftBanner && currentStep === 1 && (
+          <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/10 border-primary">
+            <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
+              <div>
+                <p className="font-semibold text-primary text-sm sm:text-base">
+                  พบแบบร่างที่บันทึกไว้
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  ต้องการกลับมาทำรายการต่อหรือไม่?
+                </p>
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={handleRestoreDraft}
+                  size="sm"
+                  className="flex-1 sm:flex-none bg-primary hover:bg-primary/90"
+                >
+                  โหลดแบบร่าง
+                </Button>
+                <Button
+                  onClick={handleClearDraft}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                >
+                  เริ่มใหม่
+                </Button>
               </div>
             </div>
+          </Card>
+        )}
 
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger>
-                <SelectValue placeholder="วันที่" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกวัน</SelectItem>
-                <SelectItem value="2025-10-29">29 ต.ค.</SelectItem>
-                <SelectItem value="2025-10-30">30 ต.ค.</SelectItem>
-                <SelectItem value="2025-10-31">31 ต.ค.</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="สถานะ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกสถานะ</SelectItem>
-                <SelectItem value="paid">ชำระแล้ว</SelectItem>
-                <SelectItem value="pending">รอชำระ</SelectItem>
-                <SelectItem value="cancelled">ยกเลิก</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedCheckIn} onValueChange={setSelectedCheckIn}>
-              <SelectTrigger>
-                <SelectValue placeholder="เช็คอิน" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
-                <SelectItem value="checked-in">เช็คอินแล้ว</SelectItem>
-                <SelectItem value="not-checked-in">ยังไม่เช็คอิน</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedSize} onValueChange={setSelectedSize}>
-              <SelectTrigger>
-                <SelectValue placeholder="จำนวน" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกขนาด</SelectItem>
-                <SelectItem value="5">5 คน</SelectItem>
-                <SelectItem value="6">6 คน</SelectItem>
-                <SelectItem value="7">7 คน</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedPayment} onValueChange={setSelectedPayment}>
-              <SelectTrigger>
-                <SelectValue placeholder="การชำระ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ทุกวิธี</SelectItem>
-                <SelectItem value="promptpay">PromptPay</SelectItem>
-                <SelectItem value="credit-card">บัตรเครดิต</SelectItem>
-                <SelectItem value="bank-transfer">โอนเงิน</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {(searchQuery || selectedDate !== "all" || selectedStatus !== "all" || selectedSize !== "all" || selectedPayment !== "all" || selectedCheckIn !== "all") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="mt-4"
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              ล้างตัวกรอง
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Bulk Actions */}
-      {selectedBookings.size > 0 && (
-        <Card className="border-primary">
-          <CardContent className="flex items-center justify-between py-4">
-            <span className="text-sm">
-              เลือก {selectedBookings.size} รายการ
-            </span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Mail className="mr-2 h-4 w-4" />
-                ส่งอีเมล
+        {currentStep < 6 && (
+          <>
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <Button
+                onClick={handleDateChange}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground min-h-[44px] sm:min-h-[48px]"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                กลับหน้าหลัก
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="mr-2 h-4 w-4" />
-                ลบ
+              
+              <Button
+                onClick={() => setShowRulesDialog(true)}
+                variant="outline"
+                className="border-secondary text-secondary hover:bg-secondary/10 min-h-[44px] sm:min-h-[48px]"
+              >
+                <Info className="mr-2 w-4 h-4" />
+                กติกา
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedBookings.size === paginatedBookings.length && paginatedBookings.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('bookingId')}>
-                    <div className="flex items-center">
-                      Booking ID
-                      {getSortIcon('bookingId')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('leader')}>
-                    <div className="flex items-center">
-                      ชื่อ-นามสกุล
-                      {getSortIcon('leader')}
-                    </div>
-                  </TableHead>
-                  <TableHead>ติดต่อ</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('eventDate')}>
-                    <div className="flex items-center">
-                      วันที่งาน
-                      {getSortIcon('eventDate')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('groupSize')}>
-                    <div className="flex items-center">
-                      จำนวน
-                      {getSortIcon('groupSize')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('totalPrice')}>
-                    <div className="flex items-center">
-                      ยอดเงิน
-                      {getSortIcon('totalPrice')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('paymentStatus')}>
-                    <div className="flex items-center">
-                      สถานะ
-                      {getSortIcon('paymentStatus')}
-                    </div>
-                  </TableHead>
-                  <TableHead>เช็คอิน</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedBookings.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="h-64 text-center">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <Users className="h-16 w-16 mb-4 opacity-20" />
-                        <p className="text-lg font-medium">ไม่พบข้อมูลการจอง</p>
-                        <p className="text-sm">ลองเปลี่ยนตัวกรองหรือค้นหาใหม่</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedBookings.map((booking) => (
-                    <TableRow
-                      key={booking.bookingId}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleViewBooking(booking)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedBookings.has(booking.bookingId)}
-                          onCheckedChange={(checked) =>
-                            handleSelectBooking(booking.bookingId, checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium font-mono">
-                        {booking.bookingId}
-                      </TableCell>
-                      <TableCell>
-                        {booking.leader.firstName} {booking.leader.lastName}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="text-xs text-muted-foreground">{booking.leader.email}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {booking.leader.phone}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(booking.eventDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</TableCell>
-                      <TableCell>{booking.groupSize} คน</TableCell>
-                      <TableCell className="font-semibold">฿{booking.totalPrice.toLocaleString()}</TableCell>
-                      <TableCell>{getStatusBadge(booking.paymentStatus)}</TableCell>
-                      <TableCell>
-                        {booking.checkInStatus ? (
-                          <CheckCircle className="h-5 w-5 text-success" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewBooking(booking)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              ดูรายละเอียด
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditBooking(booking)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              แก้ไข
-                            </DropdownMenuItem>
-                            {!booking.checkInStatus && (
-                              <DropdownMenuItem onClick={() => handleCheckIn(booking)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                เช็คอิน
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={() => handleDownloadQR(booking)}>
-                              <QrCode className="mr-2 h-4 w-4" />
-                              ดาวน์โหลด QR
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handlePrint(booking)}>
-                              <Printer className="mr-2 h-4 w-4" />
-                              พิมพ์
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              ส่งอีเมลใหม่
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {booking.paymentStatus === 'completed' && (
-                              <DropdownMenuItem onClick={() => handleRefund(booking)}>
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                คืนเงิน
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleDelete(booking)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              ลบการจอง
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            แสดง {((currentPage - 1) * itemsPerPage) + 1} ถึง{" "}
-            {Math.min(currentPage * itemsPerPage, filteredBookings.length)} จาก{" "}
-            {filteredBookings.length} รายการ
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              ก่อนหน้า
-            </Button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const page = i + 1;
-              return (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </Button>
-              );
-            })}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              ถัดไป
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* View/Edit Modal */}
-      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>การจอง {selectedBooking?.bookingId}</DialogTitle>
-            <DialogDescription>
-              รายละเอียดและจัดการการจอง
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Tabs */}
-          <div className="border-b border-border">
-            <div className="flex space-x-1">
-              {(['details', 'edit', 'notes', 'activity'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeTab === tab
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tab === 'details' && 'รายละเอียด'}
-                  {tab === 'edit' && 'แก้ไข'}
-                  {tab === 'notes' && 'บันทึกย่อ'}
-                  {tab === 'activity' && 'ประวัติ'}
-                </button>
-              ))}
+            <div className="text-center mb-8 sm:mb-10 md:mb-12">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 text-primary text-glow-orange font-spooky leading-tight px-2">
+                จองตั๋วของคุณ
+              </h1>
             </div>
-          </div>
 
-          {/* Tab Content */}
-          <div className="py-4">
-            {activeTab === 'details' && selectedBooking && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-semibold mb-4">ข้อมูลการจอง</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">รหัสจอง:</span>
-                        <span className="font-mono font-semibold">{selectedBooking.bookingId}</span>
+            <BookingProgress currentStep={currentStep} totalSteps={5} />
+          </>
+        )}
+
+        {currentStep === 6 && booking ? (
+          <ConfirmationSuccess booking={booking} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+            <div className="lg:col-span-2">
+              <Card className="p-4 sm:p-6 md:p-8 bg-card border-2 border-border shadow-card">
+                {/* Step 1: Date Selection */}
+                {currentStep === 1 && (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <Calendar className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-spooky text-primary">
+                        เลือกวันที่
+                      </h2>
+                    </div>
+
+                    <div className="bg-primary/10 border-2 border-primary rounded-xl p-4 sm:p-6 md:p-8 text-center">
+                      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-spooky text-primary mb-3 sm:mb-4 leading-tight px-2">
+                        {dateLabels[selectedDate]}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">วันที่งาน:</span>
-                        <span>{new Date(selectedBooking.eventDate).toLocaleDateString('th-TH')}</span>
+                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-muted-foreground mb-2">
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                        <span>10:00 - 17:00 น.</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">จำนวนคน:</span>
-                        <span>{selectedBooking.groupSize} คน</span>
+                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-muted-foreground">
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                        <span>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">ยอดเงิน:</span>
-                        <span className="font-semibold">฿{selectedBooking.totalPrice.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">สถานะ:</span>
-                        {getStatusBadge(selectedBooking.paymentStatus)}
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">เช็คอิน:</span>
-                        {selectedBooking.checkInStatus ? (
-                          <Badge className="bg-success">เช็คอินแล้ว</Badge>
-                        ) : (
-                          <Badge variant="secondary">ยังไม่เช็คอิน</Badge>
-                        )}
-                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                      <Button
+                        onClick={() => navigate("/")}
+                        variant="outline"
+                        className="flex-1 border-2 border-secondary text-secondary hover:bg-secondary/10 min-h-[48px] text-base"
+                      >
+                        เปลี่ยนวันที่
+                      </Button>
+                      <Button
+                        onClick={() => setCurrentStep(2)}
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px] text-base sm:text-lg"
+                      >
+                        ยืนยันและเลือกรอบเวลา →
+                      </Button>
                     </div>
                   </div>
+                )}
 
-                  <div>
-                    <h3 className="font-semibold mb-4">ข้อมูลหัวหน้ากลุ่ม</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">ชื่อ-นามสกุล:</span>
-                        <span>{selectedBooking.leader.firstName} {selectedBooking.leader.lastName}</span>
+                {/* Step 2: Time Slot Selection */}
+                {currentStep === 2 && (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                      <Clock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-spooky text-primary">
+                        เลือกรอบเวลา
+                      </h2>
+                    </div>
+
+                    <div className="space-y-3">
+                      {timeSlots.map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => setSelectedTimeSlot(slot.id)}
+                          className={`w-full p-4 sm:p-5 rounded-xl border-2 transition-all text-left ${
+                            selectedTimeSlot === slot.id
+                              ? "border-primary bg-primary/10 glow-orange"
+                              : "border-border hover:border-primary/50 bg-card"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <h3 className="text-lg sm:text-xl font-bold text-primary mb-1">
+                                {slot.label}
+                              </h3>
+                              <p className="text-sm sm:text-base text-foreground font-semibold mb-1">
+                                {slot.time}
+                              </p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                {slot.rounds} • {slot.description}
+                              </p>
+                            </div>
+                            <div
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                selectedTimeSlot === slot.id
+                                  ? "border-primary bg-primary"
+                                  : "border-border"
+                              }`}
+                            >
+                              {selectedTimeSlot === slot.id && (
+                                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="bg-secondary/10 border border-secondary rounded-lg p-3 sm:p-4">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        ⚠️ <strong>สำคัญ:</strong> กรุณามาก่อนเวลา 30 นาที เพื่อลงทะเบียนและเข้าคิว • มาสายไม่คืนเงินและไม่สามารถเปลี่ยนรอบได้
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Group Size */}
+                {currentStep === 3 && (
+                  <GroupSizeSelector
+                    selectedSize={groupSize}
+                    onSelect={setGroupSize}
+                    ticketPrice={TICKET_PRICE}
+                  />
+                )}
+
+                {/* Step 4: Member Information */}
+                {currentStep === 4 && (
+                  <>
+                    <MemberForm
+                      groupSize={groupSize}
+                      leader={leader}
+                      members={members}
+                      onLeaderChange={setLeader}
+                      onMembersChange={setMembers}
+                      errors={errors}
+                    />
+
+                    {/* Promo Code Section for Mobile */}
+                    <div className="mt-6 sm:mt-8 lg:hidden border-t border-border pt-6 sm:pt-8">
+                      <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+                        <span>💰</span> สรุปยอดรวม
+                      </h3>
+                      
+                      <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4">
+                        <div className="flex justify-between text-sm sm:text-base mb-2">
+                          <span className="text-muted-foreground">ยอดรวม</span>
+                          <span className="font-semibold">{subtotal.toLocaleString()} บาท</span>
+                        </div>
+                        {appliedPromo && (
+                          <div className="flex justify-between text-success text-sm sm:text-base">
+                            <span>ส่วนลด ({appliedPromo.code})</span>
+                            <span className="font-semibold">-{appliedPromo.discount.toLocaleString()} บาท</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">อีเมล:</span>
-                        <span>{selectedBooking.leader.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">โทรศัพท์:</span>
-                        <span>{selectedBooking.leader.phone}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">อายุ:</span>
-                        <span>{selectedBooking.leader.age} ปี</span>
-                      </div>
-                      {selectedBooking.leader.lineId && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Line ID:</span>
-                          <span>{selectedBooking.leader.lineId}</span>
+
+                      {appliedPromo ? (
+                        <div className="flex items-center justify-between bg-success/10 border border-success rounded-lg p-3 sm:p-4">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-sm">✓</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-success text-sm sm:text-base">{appliedPromo.code}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">ลด {appliedPromo.discount} บาท</p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleRemovePromo}
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 min-h-[40px]"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <Label htmlFor="mobile-promo" className="text-sm sm:text-base">
+                            รหัสส่วนลด (ถ้ามี)
+                          </Label>
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              id="mobile-promo"
+                              value={promoInput}
+                              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                              placeholder="กรอกโค้ดส่วนลด"
+                              className="flex-1 border-2 border-input focus:border-primary min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && promoInput.trim()) {
+                                  handleApplyPromo(promoInput.trim());
+                                }
+                              }}
+                            />
+                            <Button
+                              onClick={() => {
+                                if (promoInput.trim()) {
+                                  handleApplyPromo(promoInput.trim());
+                                }
+                              }}
+                              disabled={!promoInput.trim()}
+                              variant="outline"
+                              className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground min-h-[44px] sm:min-h-[48px] px-4 sm:px-6"
+                            >
+                              ใช้โค้ด
+                            </Button>
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                            💡 ลองโค้ด: HALLOWEEN10, EARLYBIRD, SCARY20
+                          </p>
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
-                <div>
-                  <h3 className="font-semibold mb-4">สมาชิกในกลุ่ม</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedBooking.members.map((member, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="text-sm space-y-1">
-                          <div className="font-medium">คนที่ {index + 1}</div>
-                          <div className="text-muted-foreground">
-                            {member.firstName} {member.lastName}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            อายุ: {member.age} ปี
-                          </div>
+                {/* Step 5: Payment */}
+                {currentStep === 5 && (
+                  <div className="space-y-6">
+                    <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                        ⏰ กรุณาชำระเงินภายใน
+                      </p>
+                      <div
+                        className={`text-2xl sm:text-3xl font-bold ${
+                          timeRemaining < 300
+                            ? "text-destructive animate-pulse"
+                            : "text-primary"
+                        }`}
+                      >
+                        {formatTime(timeRemaining)} นาที
+                      </div>
+                      {timeRemaining < 300 && (
+                        <p className="text-xs sm:text-sm text-destructive mt-1">
+                          ⚠️ เหลือเวลาน้อย!
+                        </p>
+                      )}
+                    </div>
+
+                    <PaymentMethods
+                      selectedMethod={paymentMethod}
+                      onMethodChange={setPaymentMethod}
+                      onPaymentComplete={handlePaymentComplete}
+                      isProcessing={isProcessing}
+                    />
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                {currentStep < 5 && currentStep > 1 && (
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
+                    <Button
+                      onClick={() => setCurrentStep((prev) => prev - 1)}
+                      variant="outline"
+                      className="w-full py-5 sm:py-6 text-base sm:text-lg border-2 border-border min-h-[48px]"
+                    >
+                      ← ย้อนกลับ
+                    </Button>
+                    {currentStep === 2 && (
+                      <Button
+                        onClick={() => setCurrentStep(3)}
+                        disabled={!selectedTimeSlot}
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                      >
+                        ถัดไป →
+                      </Button>
+                    )}
+                    {currentStep === 3 && (
+                      <Button
+                        onClick={handleGroupSizeNext}
+                        disabled={!canProceedFromStep3}
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                      >
+                        ถัดไป →
+                      </Button>
+                    )}
+                    {currentStep === 4 && (
+                      <Button
+                        onClick={handleMemberFormNext}
+                        disabled={!canProceedFromStep4}
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                      >
+                        ไปหน้าชำระเงิน →
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            {currentStep < 5 && (
+              <div className="lg:col-span-1 hidden lg:block">
+                <BookingSidebar
+                  selectedDate={selectedDate}
+                  selectedTimeSlot={timeSlots.find(s => s.id === selectedTimeSlot)?.label}
+                  groupSize={groupSize}
+                  ticketPrice={TICKET_PRICE}
+                  appliedPromo={appliedPromo}
+                  onApplyPromo={handleApplyPromo}
+                  onRemovePromo={handleRemovePromo}
+                  onProceed={() => {
+                    if (currentStep === 1) setCurrentStep(2);
+                    else if (currentStep === 2 && selectedTimeSlot) setCurrentStep(3);
+                    else if (currentStep === 3 && canProceedFromStep3) handleGroupSizeNext();
+                    else if (currentStep === 4 && canProceedFromStep4) handleMemberFormNext();
+                  }}
+                  canProceed={
+                    currentStep === 1 ||
+                    (currentStep === 2 && !!selectedTimeSlot) ||
+                    (currentStep === 3 && canProceedFromStep3) ||
+                    (currentStep === 4 && canProceedFromStep4)
+                  }
+                />
+              </div>
+            )}
+
+            {/* Payment Summary for Step 5 */}
+            {currentStep === 5 && (
+              <div className="lg:col-span-1">
+                <div className="sticky top-6">
+                  <Card className="p-4 sm:p-6 bg-card border-2 border-primary glow-orange">
+                    <h3 className="text-xl sm:text-2xl font-spooky text-primary mb-4 sm:mb-6">
+                      สรุปคำสั่งซื้อ
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-muted-foreground">วันที่:</span>
+                          <span className="font-semibold text-right">
+                            {dateLabels[selectedDate].split("(")[0]}
+                          </span>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'edit' && selectedBooking && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>วันที่งาน</Label>
-                    <Input
-                      type="date"
-                      value={editForm.eventDate}
-                      onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>จำนวนคน</Label>
-                    <Select 
-                      value={editForm.groupSize.toString()} 
-                      onValueChange={(v) => setEditForm({ ...editForm, groupSize: parseInt(v) })}
-                    >
-                      <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5 คน</SelectItem>
-                        <SelectItem value="6">6 คน</SelectItem>
-                        <SelectItem value="7">7 คน</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>ชื่อ</Label>
-                    <Input
-                      value={editForm.leader.firstName}
-                      onChange={(e) => setEditForm({ 
-                        ...editForm, 
-                        leader: { ...editForm.leader, firstName: e.target.value }
-                      })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>นามสกุล</Label>
-                    <Input
-                      value={editForm.leader.lastName}
-                      onChange={(e) => setEditForm({ 
-                        ...editForm, 
-                        leader: { ...editForm.leader, lastName: e.target.value }
-                      })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>อีเมล</Label>
-                    <Input
-                      type="email"
-                      value={editForm.leader.email}
-                      onChange={(e) => setEditForm({ 
-                        ...editForm, 
-                        leader: { ...editForm.leader, email: e.target.value }
-                      })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>โทรศัพท์</Label>
-                    <Input
-                      value={editForm.leader.phone}
-                      onChange={(e) => setEditForm({ 
-                        ...editForm, 
-                        leader: { ...editForm.leader, phone: e.target.value }
-                      })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>สถานะการชำระเงิน</Label>
-                    <Select 
-                      value={editForm.paymentStatus} 
-                      onValueChange={(v: any) => setEditForm({ ...editForm, paymentStatus: v })}
-                    >
-                      <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">รอชำระ</SelectItem>
-                        <SelectItem value="completed">ชำระแล้ว</SelectItem>
-                        <SelectItem value="failed">ยกเลิก</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <Button onClick={handleSaveEdit} className="w-full bg-primary">
-                  บันทึกการแก้ไข
-                </Button>
-              </div>
-            )}
-
-            {activeTab === 'notes' && selectedBooking && (
-              <div className="space-y-4">
-                <div>
-                  <Label>หมายเหตุจาก Admin</Label>
-                  <Textarea
-                    value={adminNotes || selectedBooking.adminNotes || ''}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="เพิ่มหมายเหตุสำหรับการจองนี้..."
-                    rows={10}
-                    className="mt-2"
-                  />
-                </div>
-                <Button onClick={handleSaveNotes} className="w-full bg-primary">
-                  บันทึกหมายเหตุ
-                </Button>
-              </div>
-            )}
-
-            {activeTab === 'activity' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                  <History className="h-4 w-4" />
-                  <span className="text-sm">ประวัติการแก้ไขและกิจกรรม</span>
-                </div>
-                {mockActivityLog.map((log, index) => (
-                  <div key={index} className="flex gap-4 pb-4 border-b last:border-0">
-                    <div className="flex-shrink-0 w-32 text-xs text-muted-foreground">
-                      {log.timestamp}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{log.action}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {log.details}
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-muted-foreground">รอบเวลา:</span>
+                          <span className="font-semibold text-right">
+                            {timeSlots.find(s => s.id === selectedTimeSlot)?.label}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-muted-foreground">จำนวนคน:</span>
+                          <span className="font-semibold">{groupSize} คน</span>
+                        </div>
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-muted-foreground">หัวหน้ากลุ่ม:</span>
+                          <span className="font-semibold text-right">
+                            {leader.firstName} {leader.lastName}
+                            {leader.nickname && ` (${leader.nickname})`}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        โดย: {log.admin}
+
+                      <div className="border-t border-border pt-4 space-y-2">
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span>ยอดรวม</span>
+                          <span className="font-semibold">
+                            {subtotal.toLocaleString()} บาท
+                          </span>
+                        </div>
+                        {appliedPromo && (
+                          <div className="flex justify-between text-success text-sm sm:text-base">
+                            <span>ส่วนลด ({appliedPromo.code})</span>
+                            <span className="font-semibold">
+                              -{appliedPromo.discount.toLocaleString()} บาท
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xl sm:text-2xl font-bold pt-2 border-t border-border">
+                          <span>ยอดชำระทั้งหมด</span>
+                          <span className="text-accent">
+                            {total.toLocaleString()} บาท
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Check-in Dialog */}
-      <Dialog open={showCheckInDialog} onOpenChange={setShowCheckInDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>ยืนยันการเช็คอิน</DialogTitle>
-            <DialogDescription>
-              ยืนยันการเช็คอินสำหรับการจอง {selectedBooking?.bookingId}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedBooking && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">ชื่อ:</span>
-                    <span className="font-medium">
-                      {selectedBooking.leader.firstName} {selectedBooking.leader.lastName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">จำนวน:</span>
-                    <span className="font-medium">{selectedBooking.groupSize} คน</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">วันที่:</span>
-                    <span className="font-medium">
-                      {new Date(selectedBooking.eventDate).toLocaleDateString('th-TH')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-warning">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">การเช็คอินไม่สามารถยกเลิกได้</span>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCheckInDialog(false)}>
-              ยกเลิก
-            </Button>
-            <Button onClick={confirmCheckIn} className="bg-success">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              ยืนยันเช็คอิน
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Refund Dialog */}
-      <Dialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>คืนเงิน</DialogTitle>
-            <DialogDescription>
-              ดำเนินการคืนเงินสำหรับการจอง {selectedBooking?.bookingId}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>เหตุผลการคืนเงิน *</Label>
-              <Textarea
-                value={refundReason}
-                onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="ระบุเหตุผลการคืนเงิน..."
-                rows={4}
-                className="mt-2"
-              />
-            </div>
-            {selectedBooking && (
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">จำนวนเงินที่จะคืน:</span>
-                  <span className="font-bold text-lg">
-                    ฿{selectedBooking.totalPrice.toLocaleString()}
-                  </span>
+                  </Card>
                 </div>
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRefundDialog(false)}>
-              ยกเลิก
-            </Button>
-            <Button onClick={confirmRefund} variant="destructive">
-              <DollarSign className="mr-2 h-4 w-4" />
-              ยืนยันคืนเงิน
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
 
-      {/* Delete Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              ยืนยันการลบ
-            </DialogTitle>
-            <DialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบการจอง {selectedBooking?.bookingId}? 
-              การกระทำนี้ไม่สามารถย้อนกลับได้
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              ยกเลิก
-            </Button>
-            <Button onClick={confirmDelete} variant="destructive">
-              <Trash2 className="mr-2 h-4 w-4" />
-              ลบการจอง
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Rules Dialog */}
+      <AlertDialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl sm:text-2xl text-primary">
+              📌 กติกาสำคัญ
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-4 text-sm sm:text-base">
+            <div className="space-y-2">
+              <p className="font-semibold">วันจัดงาน:</p>
+              <p>29 – 31 ตุลาคม 2568</p>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="font-semibold">สถานที่:</p>
+              <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
+              <ul className="list-decimal list-inside space-y-2 pl-2">
+                <li>กรุณามาถึงก่อนเวลา 30 นาที เพื่อลงทะเบียนและเลือกรอบในการเล่น</li>
+                <li>แสดง QR code/บัตร ที่จุดลงทะเบียน</li>
+                <li>บัตรที่ซื้อมีผลเฉพาะวันที่เลือกไว้เท่านั้น</li>
+                <li className="text-destructive font-semibold">หากไม่มาตามวันที่เลือก ทางทีมงานจะถือว่าสละสิทธิ์และไม่มีการคืนเงิน</li>
+                <li>ผู้เข้าร่วมทุกท่านที่ <strong>แต่งหน้าแต่งกายธีมผี/แฟนซีฮาโลวีน</strong> สามารถเข้าร่วมรับรางวัลได้</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 bg-primary/10 p-3 rounded-lg">
+              <p className="font-semibold text-primary">🎉 โปรโมชั่นพิเศษ:</p>
+              <p><strong>20 ทีม มา 7 จ่าย 6</strong> (ฟรี 1 คน)</p>
+              <p className="text-sm">ใช้โค้ด: <code className="bg-background px-2 py-1 rounded">GROUP7FOR6</code></p>
+            </div>
+
+            <div className="space-y-2 bg-secondary/10 p-3 rounded-lg">
+              <p className="font-semibold">🎭 พิเศษ!</p>
+              <p>แต่งตัว + แต่งหน้า Theme ฮาโลวีน = รับ Gift Voucher</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="font-semibold">เวลาดำเนินงาน:</p>
+              <p>• เริ่มลงทะเบียน 09:30 น.</p>
+              <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
+              <p>• รอบละ 10 นาที</p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowRulesDialog(false)}>
+              เข้าใจแล้ว
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg sm:text-xl">ยกเลิกการจอง?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base">
+              ข้อมูลที่กรอกจะถูกบันทึกเป็นแบบร่าง คุณสามารถกลับมาทำรายการต่อได้
+              หรือต้องการยกเลิกและเริ่มใหม่?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">ทำรายการต่อ</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} className="w-full sm:w-auto">
+              ยืนยันยกเลิก
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
+
 export default NewBooking;
