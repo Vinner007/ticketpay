@@ -17,7 +17,8 @@ const stories = [
     difficulty: 4,
     scary: 4,
     tagline: "เปิดรอบฉายอีกครั้ง...คนที่ต้องเข้าไป อาจเป็นคุณ!",
-    description: "ในอดีต โรงภาพยนตร์แห่งนี้เคยโด่งดัง ก่อนเกิดโศกนาฏกรรมร้าย คืนหนึ่งชายปริศนาบุกเข้ามาจุดไฟเผาและยิงผู้ชมในโรงจนไม่มีใครรอด เสียงกรีดร้องและกลิ่นไหม้ยังคงหลงเหลืออยู่ เมื่อกลุ่มนักสำรวจตัดสินใจ \"เปิดรอบฉายอีกครั้ง\" เพื่อหาความจริง แต่รอบนี้...คนที่ต้องเข้าไป อาจเป็นคุณ!",
+    description:
+      'ในอดีต โรงภาพยนตร์แห่งนี้เคยโด่งดัง ก่อนเกิดโศกนาฏกรรมร้าย คืนหนึ่งชายปริศนาบุกเข้ามาจุดไฟเผาและยิงผู้ชมในโรงจนไม่มีใครรอด เสียงกรีดร้องและกลิ่นไหม้ยังคงหลงเหลืออยู่ เมื่อกลุ่มนักสำรวจตัดสินใจ "เปิดรอบฉายอีกครั้ง" เพื่อหาความจริง แต่รอบนี้...คนที่ต้องเข้าไป อาจเป็นคุณ!',
     color: "orange",
     bgGradient: "from-orange-500/20 to-red-600/30",
     borderColor: "border-orange-500/50",
@@ -31,7 +32,8 @@ const stories = [
     difficulty: 3,
     scary: 5,
     tagline: "บทเรียนกลับมาเปิดสอนอีกครั้ง...รอนักศึกษาใหม่",
-    description: "\"แพรวา\" นักศึกษาหญิงผู้หลงใหลการแพทย์ ถูกอาจารย์ของเธอ เลือกให้เป็นส่วนหนึ่งของบทเรียน \"การทดลองที่ไม่มีวันสำเร็จ\" คืนหนึ่งไฟในห้องแล็บดับลง เสียงกรีดร้องครั้งสุดท้ายของเธอดังก้องไม่จางหาย ตั้งแต่นั้นมา บทเรียนนั้นเหมือนถูกลืมและปิดไปอย่างลึกลับ ตอนนี้บทเรียนที่ถูกปิดตัวได้กลับมา เปิดสอนอีกครั้ง และกำลังรอนักศึกษาใหม่อย่างคุณ มาท้าทาย!",
+    description:
+      '"แพรวา" นักศึกษาหญิงผู้หลงใหลการแพทย์ ถูกอาจารย์ของเธอ เลือกให้เป็นส่วนหนึ่งของบทเรียน "การทดลองที่ไม่มีวันสำเร็จ" คืนหนึ่งไฟในห้องแล็บดับลง เสียงกรีดร้องครั้งสุดท้ายของเธอดังก้องไม่จางหาย ตั้งแต่นั้นมา บทเรียนนั้นเหมือนถูกลืมและปิดไปอย่างลึกลับ ตอนนี้บทเรียนที่ถูกปิดตัวได้กลับมา เปิดสอนอีกครั้ง และกำลังรอนักศึกษาใหม่อย่างคุณ มาท้าทาย!',
     color: "purple",
     bgGradient: "from-purple-500/20 to-pink-600/30",
     borderColor: "border-purple-500/50",
@@ -79,9 +81,7 @@ const StorySelection = () => {
             💀 เลือก 1 จาก 2 เรื่องราวสยองขวัญ แล้วเตรียมตัวให้พร้อม... 💀
           </p>
           <div className="inline-block px-4 py-2 bg-destructive/20 border border-destructive rounded-lg">
-            <p className="text-sm text-destructive font-semibold">
-              ⚠️ ความน่ากลัวระดับสูง • ไม่เหมาะกับผู้มีโรคหัวใจ
-            </p>
+            <p className="text-sm text-destructive font-semibold">⚠️ ความน่ากลัวระดับสูง • ไม่เหมาะกับผู้มีโรคหัวใจ</p>
           </div>
         </div>
 
@@ -96,7 +96,9 @@ const StorySelection = () => {
             >
               {/* Story Number Badge */}
               <div className="absolute top-4 left-4 z-20">
-                <Badge className={`text-lg px-4 py-2 ${story.color === 'orange' ? 'bg-orange-500' : 'bg-purple-500'} text-white font-bold shadow-lg`}>
+                <Badge
+                  className={`text-lg px-4 py-2 ${story.color === "orange" ? "bg-orange-500" : "bg-purple-500"} text-white font-bold shadow-lg`}
+                >
                   เรื่องที่ {index + 1}
                 </Badge>
               </div>
@@ -109,8 +111,10 @@ const StorySelection = () => {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:blur-sm"
                 />
                 {/* Dark Gradient Overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-t ${story.bgGradient} via-background/70 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-500`} />
-                
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t ${story.bgGradient} via-background/70 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-500`}
+                />
+
                 {/* Floating Ghost Icon */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-20 transition-all duration-500">
                   <Ghost className="h-32 w-32 text-white animate-float" />
@@ -118,12 +122,12 @@ const StorySelection = () => {
 
                 {/* Title on Image */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 transform transition-transform duration-500 group-hover:translate-y-[-10px]">
-                  <h2 className={`text-4xl md:text-5xl font-spooky mb-2 ${story.color === 'orange' ? 'text-orange-500 text-glow-orange' : 'text-purple-500 text-glow-purple'}`}>
+                  <h2
+                    className={`text-4xl md:text-5xl font-spooky mb-2 ${story.color === "orange" ? "text-orange-500 text-glow-orange" : "text-purple-500 text-glow-purple"}`}
+                  >
                     {story.title}
                   </h2>
-                  <p className="text-sm text-muted-foreground italic mb-2">
-                    {story.titleEn}
-                  </p>
+                  <p className="text-sm text-muted-foreground italic mb-2">{story.titleEn}</p>
                   <p className="text-sm text-foreground font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     {story.tagline}
                   </p>
@@ -136,7 +140,9 @@ const StorySelection = () => {
                 <div className="flex gap-8 pb-4 border-b-2 border-border">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className={`h-4 w-4 ${story.color === 'orange' ? 'text-orange-500' : 'text-purple-500'}`} />
+                      <AlertTriangle
+                        className={`h-4 w-4 ${story.color === "orange" ? "text-orange-500" : "text-purple-500"}`}
+                      />
                       <p className="text-sm font-semibold">ความยาก</p>
                     </div>
                     <div className="flex gap-1">
@@ -145,8 +151,8 @@ const StorySelection = () => {
                           key={i}
                           className={`h-5 w-5 transition-all duration-300 ${
                             i < story.difficulty
-                              ? story.color === 'orange' 
-                                ? "fill-orange-500 text-orange-500 drop-shadow-glow" 
+                              ? story.color === "orange"
+                                ? "fill-orange-500 text-orange-500 drop-shadow-glow"
                                 : "fill-purple-500 text-purple-500 drop-shadow-glow"
                               : "fill-muted text-muted"
                           }`}
@@ -196,9 +202,9 @@ const StorySelection = () => {
                 {/* CTA Button with Enhanced Design */}
                 <Button
                   className={`w-full py-6 text-lg font-bold relative overflow-hidden group/btn ${
-                    story.color === 'orange' 
-                      ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700' 
-                      : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
+                    story.color === "orange"
+                      ? "bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                      : "bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
                   } text-white shadow-lg transition-all duration-300`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -243,7 +249,10 @@ const StorySelection = () => {
                 <div className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
                   <div className="relative text-center p-6 bg-card/50 backdrop-blur rounded-xl border-2 border-purple-500/30 hover:border-purple-500 transition-all duration-300 hover:scale-105">
-                    <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-pink-600 mb-2 animate-pulse-slow" style={{ animationDelay: "0.2s" }}>
+                    <div
+                      className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-pink-600 mb-2 animate-pulse-slow"
+                      style={{ animationDelay: "0.2s" }}
+                    >
                       504
                     </div>
                     <p className="text-sm font-semibold mb-1">ที่นั่งรวมทั้งหมด</p>
@@ -253,7 +262,10 @@ const StorySelection = () => {
                 <div className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
                   <div className="relative text-center p-6 bg-card/50 backdrop-blur rounded-xl border-2 border-green-500/30 hover:border-green-500 transition-all duration-300 hover:scale-105">
-                    <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-green-500 to-emerald-600 mb-2 animate-pulse-slow" style={{ animationDelay: "0.4s" }}>
+                    <div
+                      className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-green-500 to-emerald-600 mb-2 animate-pulse-slow"
+                      style={{ animationDelay: "0.4s" }}
+                    >
                       5-7
                     </div>
                     <p className="text-sm font-semibold mb-1">คนต่อทีม</p>
@@ -270,7 +282,7 @@ const StorySelection = () => {
               <Clock className="h-8 w-8 animate-spin-slow" />
               ตารางเวลารายละเอียด
             </h3>
-            
+
             <div className="space-y-6">
               {/* Day 29 */}
               <div className="group hover:bg-primary/5 p-4 rounded-xl transition-all duration-300">
@@ -332,9 +344,7 @@ const StorySelection = () => {
                       <span className="font-semibold">12:30-13:00 (6 รอบ)</span>
                     </div>
                     <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-accent/20 to-accent/10 border-2 border-accent animate-pulse-slow">
-                      <span className="font-bold text-accent flex items-center gap-2">
-                        🎉 พิธีเปิดงาน (ท่านรองวิรัส):
-                      </span>
+                      <span className="font-bold text-accent flex items-center gap-2">🎉 พิธีเปิดงาน :</span>
                       <span className="font-bold text-accent">13:00-13:30</span>
                     </div>
                     <div className="flex justify-between items-center p-2 rounded hover:bg-muted/50">
@@ -399,8 +409,8 @@ const StorySelection = () => {
             <div className="mt-6 p-4 bg-gradient-to-r from-muted to-muted/50 rounded-xl border-2 border-primary/30 text-center">
               <p className="text-sm flex items-center justify-center gap-2">
                 <Clock className="inline h-4 w-4 text-primary animate-spin-slow" />
-                <strong>แต่ละรอบใช้เวลา 10 นาที</strong> • 
-                กรุณามาถึงก่อนเวลา <strong className="text-primary">30 นาที</strong> เพื่อลงทะเบียน
+                <strong>แต่ละรอบใช้เวลา 10 นาที</strong> • กรุณามาถึงก่อนเวลา{" "}
+                <strong className="text-primary">30 นาที</strong> เพื่อลงทะเบียน
               </p>
             </div>
           </Card>
@@ -427,7 +437,10 @@ const StorySelection = () => {
                 ].map((warning, index) => {
                   const Icon = warning.icon;
                   return (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border border-destructive/20 hover:border-destructive/50 transition-all duration-300">
+                    <div
+                      key={index}
+                      className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border border-destructive/20 hover:border-destructive/50 transition-all duration-300"
+                    >
                       <Icon className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                       <span className="text-sm leading-relaxed">{warning.text}</span>
                     </div>
@@ -452,7 +465,9 @@ const StorySelection = () => {
                 { step: 4, title: "ชำระเงิน", desc: "80 บาท/คน", color: "blue" },
               ].map((item, index) => (
                 <div key={index} className="relative group">
-                  <div className={`absolute inset-0 bg-${item.color}-500/20 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300`} />
+                  <div
+                    className={`absolute inset-0 bg-${item.color}-500/20 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300`}
+                  />
                   <div className="relative text-center p-6 bg-card rounded-xl border-2 border-border hover:border-primary transition-all duration-300 hover:scale-105">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary text-white text-2xl font-bold mb-3 shadow-lg">
                       {item.step}
@@ -476,7 +491,7 @@ const StorySelection = () => {
           <Button
             size="lg"
             className="rounded-full px-8 py-6 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-2xl shadow-orange-500/50 animate-bounce-slow"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <Ghost className="h-5 w-5 mr-2" />
             เลือกเรื่องเลย!
