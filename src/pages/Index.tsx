@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { DateCard } from "@/components/DateCard";
 import { FeatureCard } from "@/components/FeatureCard";
@@ -23,9 +24,76 @@ import heroImage from "@/assets/hero-halloween.jpg";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
+import { supabase } from "@/lib/supabase";
+
+interface DailySummary {
+  event_date: string;
+  available_capacity: number;
+  max_capacity: number;
+}
 
 const Index = () => {
   const navigate = useNavigate();
+  const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 🔥 ดึงข้อมูลจาก Supabase
+  useEffect(() => {
+    const fetchDailySummary = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('daily_summary')
+          .select('event_date, available_capacity, max_capacity')
+          .order('event_date', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching daily summary:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          console.log('✅ Loaded data from Supabase:', data);
+          setDailySummaries(data);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDailySummary();
+  }, []);
+
+  // 🎯 ฟังก์ชันคำนวณสถานะที่นั่ง
+  const getAvailabilityStatus = (eventDate: string) => {
+    const summary = dailySummaries.find((s) => s.event_date === eventDate);
+    
+    if (!summary) {
+      return { label: "กำลังโหลด...", status: "available" as const };
+    }
+
+    const percentAvailable = (summary.available_capacity / summary.max_capacity) * 100;
+
+    console.log(`📊 Status for ${eventDate}:`, {
+      available: summary.available_capacity,
+      max: summary.max_capacity,
+      percent: percentAvailable.toFixed(1) + '%'
+    });
+
+    // ถ้าที่นั่งเต็ม
+    if (summary.available_capacity === 0) {
+      return { label: "เต็มแล้ว", status: "sold-out" as const };
+    }
+    
+    // ถ้าเหลือน้อยกว่า 30%
+    if (percentAvailable < 30) {
+      return { label: "เหลือน้อย", status: "limited" as const };
+    }
+    
+    // ถ้ามีที่ว่างมากกว่าหรือเท่ากับ 30%
+    return { label: "มีที่ว่าง", status: "available" as const };
+  };
 
   const features = [
     {
@@ -50,14 +118,15 @@ const Index = () => {
     },
   ];
 
+  // 🔥 ข้อมูลวันที่ - ดึงจาก Database
   const dates = [
     {
       date: 29,
       dayName: "วันพุธ",
       month: "ตุลาคม",
       year: 2568,
-      availableSlots: 72,
-      status: "available" as const,
+      availableSlots: dailySummaries.find(s => s.event_date === "2025-10-29")?.available_capacity || 0,
+      status: getAvailabilityStatus("2025-10-29").status,
       dateValue: "2025-10-29",
     },
     {
@@ -65,8 +134,8 @@ const Index = () => {
       dayName: "วันพฤหัสบดี",
       month: "ตุลาคม",
       year: 2568,
-      availableSlots: 66,
-      status: "limited" as const,
+      availableSlots: dailySummaries.find(s => s.event_date === "2025-10-30")?.available_capacity || 0,
+      status: getAvailabilityStatus("2025-10-30").status,
       dateValue: "2025-10-30",
     },
     {
@@ -74,8 +143,8 @@ const Index = () => {
       dayName: "วันศุกร์",
       month: "ตุลาคม",
       year: 2568,
-      availableSlots: 72,
-      status: "limited" as const,
+      availableSlots: dailySummaries.find(s => s.event_date === "2025-10-31")?.available_capacity || 0,
+      status: getAvailabilityStatus("2025-10-31").status,
       dateValue: "2025-10-31",
     },
   ];
@@ -174,17 +243,23 @@ const Index = () => {
               ที่ ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              * จำนวนรอบแสดงเป็นจำนวนรอบรวมทั้ง 2 เรื่อง
+              * จำนวนที่นั่งแสดงเป็นจำนวนคนที่เหลือ
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {dates.map((date) => (
-              <div key={date.date} onClick={() => navigate("/select-story")} className="cursor-pointer">
-                <DateCard {...date} />
-              </div>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="text-center text-muted-foreground">
+              <p>กำลังโหลดข้อมูล...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {dates.map((date) => (
+                <div key={date.date} onClick={() => navigate("/select-story")} className="cursor-pointer">
+                  <DateCard {...date} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -300,7 +375,7 @@ const Index = () => {
           <div className="text-center text-muted-foreground border-t border-border pt-8">
             <p>
               &copy; 2025{" "}
-              <a
+              
                 href="https://www.cxntrolx.in.th/"
                 target="_blank"
                 rel="noopener noreferrer"
