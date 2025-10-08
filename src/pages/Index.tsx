@@ -19,12 +19,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Pizza, Camera, Ghost, Sparkles } from "lucide-react";
+import { Pizza, Camera, Ghost, Sparkles, RefreshCw } from "lucide-react";
 import heroImage from "@/assets/hero-halloween.jpg";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface DailySummary {
   event_date: string;
@@ -36,41 +37,80 @@ const Index = () => {
   const navigate = useNavigate();
   const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // 🔥 ดึงข้อมูลจาก Supabase
-  useEffect(() => {
-    const fetchDailySummary = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('daily_summary')
-          .select('event_date, available_capacity, max_capacity')
-          .order('event_date', { ascending: true });
+  // 🔥 ดึงข้อมูลจาก Supabase พร้อม Real-time Updates
+  const fetchDailySummary = async (showToast = false) => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('daily_summary')
+        .select('event_date, available_capacity, max_capacity')
+        .order('event_date', { ascending: true });
 
-        if (error) {
-          console.error('Error fetching daily summary:', error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          console.log('✅ Loaded data from Supabase:', data);
-          setDailySummaries(data);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        console.error('❌ Error fetching daily summary:', error);
+        toast.error('ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่');
+        return;
       }
-    };
 
+      if (data && data.length > 0) {
+        console.log('✅ Loaded data from Supabase:', data);
+        setDailySummaries(data);
+        setLastUpdated(new Date());
+        if (showToast) {
+          toast.success('อัพเดทข้อมูลล่าสุดแล้ว');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
+      toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDailySummary();
+
+    // 🔄 Real-time subscription
+    const channel = supabase
+      .channel('daily_summary_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'daily_summary'
+        },
+        (payload) => {
+          console.log('🔔 Real-time update received:', payload);
+          fetchDailySummary(true);
+        }
+      )
+      .subscribe();
+
+    // ⏰ Auto-refresh ทุก 30 วินาที
+    const interval = setInterval(() => {
+      fetchDailySummary();
+    }, 30000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, []);
 
-  // 🎯 ฟังก์ชันคำนวณสถานะที่นั่ง
+  // 🎯 ฟังก์ชันคำนวณสถานะที่นั่ง (ปรับปรุงแล้ว)
   const getAvailabilityStatus = (eventDate: string) => {
     const summary = dailySummaries.find((s) => s.event_date === eventDate);
     
     if (!summary) {
-      return { label: "กำลังโหลด...", status: "available" as const };
+      return { 
+        label: "กำลังโหลด...", 
+        status: "available" as const,
+        color: "text-muted-foreground"
+      };
     }
 
     const percentAvailable = (summary.available_capacity / summary.max_capacity) * 100;
@@ -81,18 +121,48 @@ const Index = () => {
       percent: percentAvailable.toFixed(1) + '%'
     });
 
-    // ถ้าที่นั่งเต็ม
     if (summary.available_capacity === 0) {
-      return { label: "เต็มแล้ว", status: "sold-out" as const };
+      return { 
+        label: "เต็มแล้ว", 
+        status: "sold-out" as const,
+        color: "text-destructive"
+      };
     }
     
-    // ถ้าเหลือน้อยกว่า 30%
     if (percentAvailable < 30) {
-      return { label: "เหลือน้อย", status: "limited" as const };
+      return { 
+        label: "เหลือน้อย", 
+        status: "limited" as const,
+        color: "text-warning"
+      };
     }
     
-    // ถ้ามีที่ว่างมากกว่าหรือเท่ากับ 30%
-    return { label: "มีที่ว่าง", status: "available" as const };
+    return { 
+      label: "มีที่ว่าง", 
+      status: "available" as const,
+      color: "text-success"
+    };
+  };
+
+  // 🔒 เช็คที่นั่งก่อนเข้าหน้าจอง
+  const handleDateClick = (dateValue: string) => {
+    const summary = dailySummaries.find(s => s.event_date === dateValue);
+    
+    if (!summary) {
+      toast.error("ไม่สามารถโหลดข้อมูลที่นั่งได้ กรุณาลองใหม่");
+      return;
+    }
+
+    if (summary.available_capacity === 0) {
+      toast.error("😢 ขออภัย วันนี้เต็มแล้ว กรุณาเลือกวันอื่น");
+      return;
+    }
+
+    if (summary.available_capacity < 5) {
+      toast.warning(`⚠️ เหลือที่นั่งเพียง ${summary.available_capacity} ที่ กรุณารีบจอง!`);
+    }
+
+    navigate(`/select-story?date=${dateValue}`);
   };
 
   const features = [
@@ -221,7 +291,10 @@ const Index = () => {
 
           <div className="flex justify-center">
             <Button
-              onClick={() => navigate("/select-story")}
+              onClick={() => {
+                const element = document.getElementById('date-selection');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
               size="lg"
               className="text-2xl px-16 py-8 bg-primary text-primary-foreground hover:bg-primary/90 glow-orange font-bold shadow-2xl"
             >
@@ -243,23 +316,63 @@ const Index = () => {
               ที่ ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              * จำนวนที่นั่งแสดงเป็นจำนวนคนที่เหลือ
+              * จำนวนที่นั่งแสดงเป็นจำนวนคนที่เหลือ (อัพเดทแบบ Real-time)
             </p>
+            
+            {/* แสดงเวลาอัพเดทล่าสุด */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button
+                onClick={() => fetchDailySummary(true)}
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                อัพเดทข้อมูล
+              </Button>
+              {lastUpdated && (
+                <span className="text-xs text-muted-foreground">
+                  อัพเดทล่าสุด: {lastUpdated.toLocaleTimeString('th-TH')}
+                </span>
+              )}
+            </div>
           </div>
 
-          {isLoading ? (
+          {isLoading && !dailySummaries.length ? (
             <div className="text-center text-muted-foreground">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
               <p>กำลังโหลดข้อมูล...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {dates.map((date) => (
-                <div key={date.date} onClick={() => navigate("/select-story")} className="cursor-pointer">
-                  <DateCard {...date} />
-                </div>
-              ))}
+              {dates.map((date) => {
+                const statusInfo = getAvailabilityStatus(date.dateValue);
+                return (
+                  <div 
+                    key={date.date} 
+                    onClick={() => handleDateClick(date.dateValue)}
+                    className={`cursor-pointer transition-transform hover:scale-105 ${
+                      date.status === 'sold-out' ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <DateCard {...date} />
+                    <div className={`text-center mt-2 font-semibold ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Live Update Indicator */}
+          <div className="text-center mt-8">
+            <div className="inline-flex items-center gap-2 bg-success/10 text-success px-4 py-2 rounded-full text-sm">
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+              <span>อัพเดทข้อมูลแบบ Real-time</span>
+            </div>
+          </div>
         </div>
       </section>
 
