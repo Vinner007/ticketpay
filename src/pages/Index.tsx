@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { DateCard } from "@/components/DateCard";
@@ -20,8 +19,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Pizza, Camera, Ghost, Sparkles } from "lucide-react";
-import { slotService, DailySummary } from "@/services/slotService";
-import { toast } from "sonner";
 import heroImage from "@/assets/hero-halloween.jpg";
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
@@ -29,38 +26,6 @@ import gallery3 from "@/assets/gallery-3.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadSummaries();
-    
-    // Subscribe Real-time updates
-    const channel = slotService.subscribeToDailySummary((payload) => {
-      console.log('📊 Summary updated:', payload);
-      loadSummaries();
-    });
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
-
-  const loadSummaries = async () => {
-    setIsLoading(true);
-    const result = await slotService.getDailySummary();
-    if (result.success && result.data) {
-      setDailySummaries(result.data);
-      console.log('✅ Summaries loaded:', result.data);
-    } else {
-      console.error('❌ Failed to load summaries:', result.error);
-    }
-    setIsLoading(false);
-  };
-
-  const getSummary = (date: string): DailySummary | undefined => {
-    return dailySummaries.find(s => s.event_date === date);
-  };
 
   const features = [
     {
@@ -91,6 +56,8 @@ const Index = () => {
       dayName: "วันพุธ",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 72,
+      status: "available" as const,
       dateValue: "2025-10-29",
     },
     {
@@ -98,6 +65,8 @@ const Index = () => {
       dayName: "วันพฤหัสบดี",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 66,
+      status: "limited" as const,
       dateValue: "2025-10-30",
     },
     {
@@ -105,6 +74,8 @@ const Index = () => {
       dayName: "วันศุกร์",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 72,
+      status: "limited" as const,
       dateValue: "2025-10-31",
     },
   ];
@@ -145,34 +116,6 @@ const Index = () => {
       answer: "นำ QR code/บัตรมาแสดงที่จุดลงทะเบียน ห้ามนำโทรศัพท์เข้าไปในบ้านผีสิง (มีจุดรับฝาก) และฝากของมีค่าไว้ที่จุดรับฝาก. คำเตือน: ทั้ง 2 เรื่องมีความน่ากลัวสูงมาก ไม่เหมาะกับผู้มีโรคหัวใจ",
     },
   ];
-
-  // คำนวณสถานะและที่นั่งของแต่ละวัน
-  const getDateInfo = (dateValue: string) => {
-    const summary = getSummary(dateValue);
-    if (!summary) {
-      return {
-        availableSlots: 0,
-        status: "sold-out" as const,
-      };
-    }
-
-    const availableCapacity = summary.available_capacity;
-    const percentBooked = summary.total_slots > 0 
-      ? (summary.booked_slots / summary.total_slots) * 100 
-      : 0;
-
-    let status: "available" | "limited" | "sold-out" = "available";
-    if (availableCapacity === 0) {
-      status = "sold-out";
-    } else if (percentBooked >= 70) {
-      status = "limited";
-    }
-
-    return {
-      availableSlots: availableCapacity,
-      status,
-    };
-  };
 
   return (
     <div className="relative min-h-screen">
@@ -231,41 +174,17 @@ const Index = () => {
               ที่ ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              * จำนวนที่นั่งอัพเดทแบบ Real-time
+              * จำนวนรอบแสดงเป็นจำนวนรอบรวมทั้ง 2 เรื่อง
             </p>
           </div>
 
-          {isLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-muted-foreground">กำลังโหลดข้อมูล...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {dates.map((date) => {
-                const dateInfo = getDateInfo(date.dateValue);
-                return (
-                  <div
-                    key={date.date}
-                    onClick={() => {
-                      if (dateInfo.status === "sold-out") {
-                        toast.error("ขออภัย ที่นั่งเต็มแล้ว");
-                        return;
-                      }
-                      navigate("/select-story");
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <DateCard
-                      {...date}
-                      availableSlots={dateInfo.availableSlots}
-                      status={dateInfo.status}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {dates.map((date) => (
+              <div key={date.date} onClick={() => navigate("/select-story")} className="cursor-pointer">
+                <DateCard {...date} />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -381,7 +300,7 @@ const Index = () => {
           <div className="text-center text-muted-foreground border-t border-border pt-8">
             <p>
               &copy; 2025{" "}
-              
+              <a
                 href="https://www.cxntrolx.in.th/"
                 target="_blank"
                 rel="noopener noreferrer"

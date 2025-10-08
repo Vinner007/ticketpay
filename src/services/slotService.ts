@@ -71,10 +71,8 @@ export const slotService = {
   async canBook(eventDate: string, groupSize: number) {
     try {
       const summaryResult = await this.getDailySummary(eventDate);
-      if (!summaryResult.success || !summaryResult.data || summaryResult.data.length === 0) {
-        return false;
-      }
-      
+      if (!summaryResult.success || !summaryResult.data) return false;
+
       const summary = summaryResult.data[0];
       return summary.available_capacity >= groupSize && summary.available_slots > 0;
     } catch (error) {
