@@ -57,36 +57,38 @@ export const useBookings = () => {
 
   const createBooking = useMutation({
     mutationFn: async (booking: Omit<Booking, "bookingId" | "confirmationCode" | "createdAt">) => {
+      const bookingData = {
+        booking_id: `HW${Date.now().toString().slice(-6)}`,
+        confirmation_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        story_theme: booking.storyTheme,
+        event_date: booking.eventDate,
+        time_slot: booking.timeSlot,
+        time_slot_time: booking.timeSlotTime,
+        group_size: booking.groupSize,
+        ticket_price: booking.ticketPrice,
+        subtotal: booking.subtotal,
+        promo_code: booking.promoCode?.code,
+        promo_discount: booking.promoCode?.discount || 0,
+        total_price: booking.totalPrice,
+        leader_first_name: booking.leader.firstName,
+        leader_last_name: booking.leader.lastName,
+        leader_nickname: booking.leader.nickname,
+        leader_email: booking.leader.email,
+        leader_phone: booking.leader.phone,
+        leader_age: booking.leader.age,
+        leader_line_id: booking.leader.lineId,
+        members: booking.members as any,
+        payment_method: booking.paymentMethod,
+        payment_status: booking.paymentStatus,
+        qr_code_data: booking.qrCodeData,
+        booking_date: booking.bookingDate,
+        check_in_status: booking.checkInStatus || "not-checked-in",
+        source: booking.source || "website",
+      };
+
       const { data, error } = await supabase
         .from("bookings")
-        .insert({
-          booking_id: `HW${Date.now().toString().slice(-6)}`,
-          confirmation_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
-          story_theme: booking.storyTheme,
-          event_date: booking.eventDate,
-          time_slot: booking.timeSlot,
-          time_slot_time: booking.timeSlotTime,
-          group_size: booking.groupSize,
-          ticket_price: booking.ticketPrice,
-          subtotal: booking.subtotal,
-          promo_code: booking.promoCode?.code,
-          promo_discount: booking.promoCode?.discount || 0,
-          total_price: booking.totalPrice,
-          leader_first_name: booking.leader.firstName,
-          leader_last_name: booking.leader.lastName,
-          leader_nickname: booking.leader.nickname,
-          leader_email: booking.leader.email,
-          leader_phone: booking.leader.phone,
-          leader_age: booking.leader.age,
-          leader_line_id: booking.leader.lineId,
-          members: booking.members,
-          payment_method: booking.paymentMethod,
-          payment_status: booking.paymentStatus,
-          qr_code_data: booking.qrCodeData,
-          booking_date: booking.bookingDate,
-          check_in_status: booking.checkInStatus || "not-checked-in",
-          source: booking.source || "website",
-        })
+        .insert([bookingData])
         .select()
         .single();
 

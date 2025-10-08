@@ -58,19 +58,27 @@ export const usePromoCodes = () => {
         throw new Error("รหัสโค้ดถูกใช้งานครบแล้ว");
       }
 
-      const minPurchase = parseFloat(promo.min_purchase || 0);
+      const minPurchase = typeof promo.min_purchase === 'string' 
+        ? parseFloat(promo.min_purchase) 
+        : promo.min_purchase || 0;
+      
       if (subtotal < minPurchase) {
         throw new Error(`ใช้ได้กับยอดขั้นต่ำ ${minPurchase} บาท`);
       }
 
       let discount = 0;
+      const promoValue = typeof promo.value === 'string' ? parseFloat(promo.value) : promo.value;
+      
       if (promo.type === "percentage") {
-        discount = Math.floor((subtotal * parseFloat(promo.value)) / 100);
+        discount = Math.floor((subtotal * promoValue) / 100);
         if (promo.max_discount) {
-          discount = Math.min(discount, parseFloat(promo.max_discount));
+          const maxDiscount = typeof promo.max_discount === 'string' 
+            ? parseFloat(promo.max_discount) 
+            : promo.max_discount;
+          discount = Math.min(discount, maxDiscount);
         }
       } else {
-        discount = parseFloat(promo.value);
+        discount = promoValue;
       }
 
       return {
@@ -85,11 +93,22 @@ export const usePromoCodes = () => {
 
   const incrementPromoUsage = useMutation({
     mutationFn: async (code: string) => {
-      const { error } = await supabase.rpc("increment_promo_usage", {
-        promo_code: code,
-      });
+      // Get current promo code
+      const { data: promo, error: fetchError } = await supabase
+        .from("promo_codes")
+        .select("used_count")
+        .eq("code", code)
+        .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      // Increment usage
+      const { error: updateError } = await supabase
+        .from("promo_codes")
+        .update({ used_count: (promo.used_count || 0) + 1 })
+        .eq("code", code);
+
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["promo_codes"] });
