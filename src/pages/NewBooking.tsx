@@ -26,7 +26,7 @@ import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { bookingService } from "@/services/bookingService";
-import { slotService } from "@/services/slotService";
+import { supabase } from "@/lib/supabase";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
@@ -93,6 +93,37 @@ const timeSlots = [
     description: "รอบสุดท้ายของวัน",
   },
 ];
+
+// 🔥 Inline Slot Service (ไม่ต้อง import แยกไฟล์)
+const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('daily_summary')
+      .select('*')
+      .eq('event_date', eventDate)
+      .single();
+
+    if (error) {
+      console.error('Error checking availability:', error);
+      return true; // ถ้า error ให้ผ่านไปก่อน
+    }
+
+    if (!data) return true;
+
+    const hasAvailability = data.available_capacity >= groupSize && data.available_slots > 0;
+    console.log('📊 Seat check:', { 
+      available: data.available_capacity, 
+      needed: groupSize, 
+      slots: data.available_slots,
+      canBook: hasAvailability 
+    });
+
+    return hasAvailability;
+  } catch (error) {
+    console.error('Error in seat check:', error);
+    return true; // ถ้า error ให้ผ่านไปก่อน
+  }
+};
 
 const NewBooking = () => {
   const [searchParams] = useSearchParams();
@@ -424,7 +455,7 @@ const NewBooking = () => {
     try {
       // 🔒 เช็คที่นั่งว่างก่อนบันทึก (Double Check)
       console.log('🔍 Checking seat availability...');
-      const canBook = await slotService.canBook(selectedDate, groupSize);
+      const canBook = await checkSeatAvailability(selectedDate, groupSize);
       
       if (!canBook) {
         toast.error("😢 ขออภัย ที่นั่งไม่เพียงพอ กรุณาเลือกวันใหม่");
