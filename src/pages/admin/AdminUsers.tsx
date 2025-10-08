@@ -23,8 +23,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DEMO_ADMINS } from '@/lib/adminAuth';
 import type { AdminUser, Permission } from '@/types/admin';
-import { useAdminUsers } from '@/hooks/useAdminUsers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,7 +66,6 @@ interface ActivityLog {
 }
 
 export const AdminUsers = () => {
-  const { adminUsers, isLoading } = useAdminUsers();
   const [activeTab, setActiveTab] = useState<'users' | 'activity'>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -179,7 +178,7 @@ export const AdminUsers = () => {
     },
   ];
 
-  const sortedUsers = [...adminUsers].sort((a, b) => {
+  const sortedUsers = [...DEMO_ADMINS].sort((a, b) => {
     switch (sortBy) {
       case 'name':
         return a.fullName.localeCompare(b.fullName);
@@ -324,7 +323,7 @@ export const AdminUsers = () => {
     }
 
     // Check email uniqueness
-    const emailExists = adminUsers.some(
+    const emailExists = DEMO_ADMINS.some(
       (u) => u.email === formData.email && u.id !== editingUser?.id
     );
     if (emailExists) {
@@ -636,7 +635,7 @@ export const AdminUsers = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">ทุกคน</SelectItem>
-                  {adminUsers.map((admin) => (
+                  {DEMO_ADMINS.map((admin) => (
                     <SelectItem key={admin.id} value={admin.email}>
                       {admin.fullName}
                     </SelectItem>

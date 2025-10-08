@@ -36,15 +36,17 @@ const DateSelection = () => {
 
   const currentStory = selectedStory ? storyInfo[selectedStory as keyof typeof storyInfo] : null;
 
-  // Calculate booked groups per date (all stories combined, as capacity is shared)
+  // Calculate booked groups per date for selected story
   const bookedGroupsByDate = useMemo(() => {
     const grouped: Record<string, number> = {};
-    bookings.forEach(booking => {
-      const date = booking.eventDate;
-      grouped[date] = (grouped[date] || 0) + 1;
-    });
+    bookings
+      .filter(booking => booking.storyTheme === selectedStory)
+      .forEach(booking => {
+        const date = booking.eventDate;
+        grouped[date] = (grouped[date] || 0) + 1;
+      });
     return grouped;
-  }, [bookings]);
+  }, [bookings, selectedStory]);
 
   const dates = [
     {
