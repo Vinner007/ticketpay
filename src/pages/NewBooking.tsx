@@ -26,6 +26,7 @@ import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { bookingService } from "@/services/bookingService";
+import { supabase } from "@/lib/supabase";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
@@ -92,6 +93,36 @@ const timeSlots = [
     description: "รอบสุดท้ายของวัน",
   },
 ];
+
+// 🔥 ฟังก์ชันเช็คที่นั่งว่าง
+const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('daily_summary')
+      .select('available_capacity')
+      .eq('event_date', eventDate)
+      .single();
+
+    if (error) {
+      console.error('Error checking availability:', error);
+      return true; // ถ้า error ให้ผ่านไปก่อน
+    }
+
+    if (!data) return true;
+
+    const hasAvailability = data.available_capacity >= groupSize;
+    console.log('📊 Seat check:', { 
+      available: data.available_capacity, 
+      needed: groupSize, 
+      canBook: hasAvailability 
+    });
+
+    return hasAvailability;
+  } catch (error) {
+    console.error('Error in seat check:', error);
+    return true; // ถ้า error ให้ผ่านไปก่อน
+  }
+};
 
 const NewBooking = () => {
   const [searchParams] = useSearchParams();
@@ -421,7 +452,18 @@ const NewBooking = () => {
     setIsProcessing(true);
 
     try {
-      console.log('💾 Processing booking...');
+      // 🔒 เช็คที่นั่งว่างก่อนบันทึก (Double Check)
+      console.log('🔍 Checking seat availability...');
+      const canBook = await checkSeatAvailability(selectedDate, groupSize);
+      
+      if (!canBook) {
+        toast.error("😢 ขออภัย ที่นั่งไม่เพียงพอ กรุณาเลือกวันใหม่");
+        setIsProcessing(false);
+        setTimeout(() => navigate("/"), 2000);
+        return;
+      }
+
+      console.log('✅ Seat available, proceeding with booking...');
       
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -493,6 +535,7 @@ const NewBooking = () => {
     leader,
     members,
     paymentMethod,
+    navigate,
   ]);
 
   const canProceedFromStep3 = useMemo(
