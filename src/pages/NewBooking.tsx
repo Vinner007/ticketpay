@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, Info, X, AlertTriangle } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { bookingService } from "@/services/bookingService";
@@ -94,33 +94,43 @@ const timeSlots = [
   },
 ];
 
-// 🔥 ฟังก์ชันเช็คที่นั่งว่าง
-const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<boolean> => {
+// 🔥 ฟังก์ชันเช็คที่นั่งว่าง (Real-time)
+const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<{ 
+  available: boolean; 
+  currentCapacity: number;
+  maxCapacity: number;
+}> => {
   try {
     const { data, error } = await supabase
       .from('daily_summary')
-      .select('available_capacity')
+      .select('available_capacity, max_capacity')
       .eq('event_date', eventDate)
       .single();
 
     if (error) {
-      console.error('Error checking availability:', error);
-      return true; // ถ้า error ให้ผ่านไปก่อน
+      console.error('❌ Error checking availability:', error);
+      return { available: true, currentCapacity: 0, maxCapacity: 0 }; // ถ้า error ให้ผ่านไปก่อน
     }
 
-    if (!data) return true;
+    if (!data) return { available: true, currentCapacity: 0, maxCapacity: 0 };
 
     const hasAvailability = data.available_capacity >= groupSize;
+    
     console.log('📊 Seat check:', { 
       available: data.available_capacity, 
+      max: data.max_capacity,
       needed: groupSize, 
       canBook: hasAvailability 
     });
 
-    return hasAvailability;
+    return {
+      available: hasAvailability,
+      currentCapacity: data.available_capacity,
+      maxCapacity: data.max_capacity
+    };
   } catch (error) {
-    console.error('Error in seat check:', error);
-    return true; // ถ้า error ให้ผ่านไปก่อน
+    console.error('❌ Error in seat check:', error);
+    return { available: true, currentCapacity: 0, maxCapacity: 0 };
   }
 };
 
@@ -155,6 +165,8 @@ const NewBooking = () => {
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const [showRulesDialog, setShowRulesDialog] = useState(false);
   const [promoInput, setPromoInput] = useState("");
+  const [availableSeats, setAvailableSeats] = useState<number | null>(null);
+  const [isCheckingSeats, setIsCheckingSeats] = useState(false);
 
   const [errors, setErrors] = useState<{
     leader?: { [key: string]: string };
@@ -168,6 +180,56 @@ const NewBooking = () => {
   const total = useMemo(() => {
     return subtotal - (appliedPromo?.discount || 0);
   }, [subtotal, appliedPromo]);
+
+  // 🔄 Real-time seat monitoring
+  useEffect(() => {
+    if (currentStep >= 2 && currentStep <= 4) {
+      const checkSeats = async () => {
+        setIsCheckingSeats(true);
+        const result = await checkSeatAvailability(selectedDate, 1);
+        setAvailableSeats(result.currentCapacity);
+        setIsCheckingSeats(false);
+
+        // ⚠️ เตือนถ้าที่นั่งใกล้เต็ม
+        if (result.currentCapacity < 10 && result.currentCapacity > 0) {
+          toast.warning(`⚠️ ที่นั่งเหลือเพียง ${result.currentCapacity} ที่!`, {
+            duration: 5000,
+          });
+        }
+      };
+
+      checkSeats();
+
+      // Subscribe to real-time updates
+      const channel = supabase
+        .channel('seat_availability')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'daily_summary',
+            filter: `event_date=eq.${selectedDate}`
+          },
+          (payload: any) => {
+            console.log('🔔 Seat availability changed:', payload);
+            setAvailableSeats(payload.new.available_capacity);
+            
+            if (payload.new.available_capacity === 0) {
+              toast.error('😢 ที่นั่งเต็มแล้ว! กรุณาเลือกวันใหม่');
+              setTimeout(() => navigate('/'), 2000);
+            } else if (payload.new.available_capacity < groupSize) {
+              toast.error(`😢 ที่นั่งเหลือไม่พอสำหรับกลุ่มของคุณ (เหลือ ${payload.new.available_capacity} ที่)`);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [currentStep, selectedDate, groupSize, navigate]);
 
   useEffect(() => {
     const draft = localStorage.getItem("booking_draft");
@@ -431,11 +493,25 @@ const NewBooking = () => {
     return validMembers.length === members.length;
   }, [leader, members]);
 
-  const handleGroupSizeNext = useCallback(() => {
+  const handleGroupSizeNext = useCallback(async () => {
     if (groupSize >= 5 && groupSize <= 7) {
+      // 🔒 เช็คที่นั่งก่อนไปขั้นต่อไป
+      setIsProcessing(true);
+      const result = await checkSeatAvailability(selectedDate, groupSize);
+      setIsProcessing(false);
+
+      if (!result.available) {
+        toast.error(`😢 ที่นั่งไม่เพียงพอ (เหลือเพียง ${result.currentCapacity} ที่)`);
+        return;
+      }
+
+      if (result.currentCapacity < 10) {
+        toast.warning(`⚠️ ที่นั่งเหลือน้อย! (เหลือ ${result.currentCapacity} ที่)`);
+      }
+
       setCurrentStep(4);
     }
-  }, [groupSize]);
+  }, [groupSize, selectedDate]);
 
   const handleMemberFormNext = useCallback(() => {
     const leaderValid = validateLeader();
@@ -452,18 +528,18 @@ const NewBooking = () => {
     setIsProcessing(true);
 
     try {
-      // 🔒 เช็คที่นั่งว่างก่อนบันทึก (Double Check)
-      console.log('🔍 Checking seat availability...');
-      const canBook = await checkSeatAvailability(selectedDate, groupSize);
+      // 🔒 Final seat check (Triple Check)
+      console.log('🔍 Final seat check before payment...');
+      const seatCheck = await checkSeatAvailability(selectedDate, groupSize);
       
-      if (!canBook) {
-        toast.error("😢 ขออภัย ที่นั่งไม่เพียงพอ กรุณาเลือกวันใหม่");
+      if (!seatCheck.available) {
+        toast.error(`😢 ขออภัย ที่นั่งไม่เพียงพอ (เหลือเพียง ${seatCheck.currentCapacity} ที่)`);
         setIsProcessing(false);
         setTimeout(() => navigate("/"), 2000);
         return;
       }
 
-      console.log('✅ Seat available, proceeding with booking...');
+      console.log('✅ Final seat check passed, processing payment...');
       
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -501,6 +577,14 @@ const NewBooking = () => {
       
       if (!result.success) {
         console.error('❌ Supabase error:', result.error);
+        
+        // ถ้าเป็น error เรื่องที่นั่ง
+        if (result.error?.includes('capacity') || result.error?.includes('seats')) {
+          toast.error('😢 ที่นั่งเต็มแล้ว กรุณาเลือกวันใหม่');
+          setTimeout(() => navigate("/"), 2000);
+          return;
+        }
+        
         throw new Error(result.error || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่');
       }
 
@@ -517,7 +601,7 @@ const NewBooking = () => {
 
       setBooking(newBooking);
       setCurrentStep(6);
-      toast.success("🎉 จองสำเร็จ! บันทึกข้อมูลลง Database แล้ว");
+      toast.success("🎉 จองสำเร็จ! ระบบอัพเดทที่นั่งแล้ว");
     } catch (error: any) {
       console.error("❌ Payment error:", error);
       toast.error(`เกิดข้อผิดพลาด: ${error.message || 'กรุณาลองใหม่'}`);
@@ -554,6 +638,23 @@ const NewBooking = () => {
       <SpiderWeb position="top-right" />
 
       <div className="container mx-auto px-3 sm:px-4 md:px-6 max-w-7xl">
+        {/* Seat Availability Warning Banner */}
+        {availableSeats !== null && availableSeats < 20 && availableSeats > 0 && currentStep >= 2 && currentStep <= 4 && (
+          <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-warning/10 border-warning">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-warning text-sm sm:text-base">
+                  ⚠️ ที่นั่งเหลือน้อย!
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  มีที่นั่งเหลือเพียง <strong className="text-warning">{availableSeats} ที่</strong> สำหรับวันที่เลือก
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {showDraftBanner && currentStep === 1 && (
           <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary/10 border-primary">
             <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
@@ -612,6 +713,17 @@ const NewBooking = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 text-primary text-glow-orange font-spooky leading-tight px-2">
                 จองตั๋วของคุณ
               </h1>
+              {availableSeats !== null && (
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  ที่นั่งว่าง: <span className={`font-bold ${
+                    availableSeats < 10 ? 'text-destructive' : 
+                    availableSeats < 30 ? 'text-warning' : 'text-success'
+                  }`}>
+                    {availableSeats}
+                  </span> / {availableSeats + groupSize} ที่
+                  {isCheckingSeats && <span className="ml-2 text-xs">(กำลังอัพเดท...)</span>}
+                </p>
+              )}
             </div>
 
             <BookingProgress currentStep={currentStep} totalSteps={5} />
@@ -725,11 +837,20 @@ const NewBooking = () => {
 
                 {/* Step 3: Group Size */}
                 {currentStep === 3 && (
-                  <GroupSizeSelector
-                    selectedSize={groupSize}
-                    onSelect={setGroupSize}
-                    ticketPrice={TICKET_PRICE}
-                  />
+                  <>
+                    <GroupSizeSelector
+                      selectedSize={groupSize}
+                      onSelect={setGroupSize}
+                      ticketPrice={TICKET_PRICE}
+                    />
+                    {groupSize > 0 && availableSeats !== null && groupSize > availableSeats && (
+                      <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
+                        <p className="text-destructive text-sm">
+                          ❌ ที่นั่งไม่เพียงพอสำหรับกลุ่มของคุณ (เหลือเพียง {availableSeats} ที่)
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Step 4: Member Information */}
@@ -877,10 +998,10 @@ const NewBooking = () => {
                     {currentStep === 3 && (
                       <Button
                         onClick={handleGroupSizeNext}
-                        disabled={!canProceedFromStep3}
-                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px]"
+                        disabled={!canProceedFromStep3 || isProcessing || (availableSeats !== null && groupSize > availableSeats)}
+                        className="w-full py-5 sm:py-6 text-base sm:text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-orange min-h-[48px] disabled:opacity-50"
                       >
-                        ถัดไป →
+                        {isProcessing ? 'กำลังตรวจสอบที่นั่ง...' : 'ถัดไป →'}
                       </Button>
                     )}
                     {currentStep === 4 && (
@@ -917,7 +1038,7 @@ const NewBooking = () => {
                   canProceed={
                     currentStep === 1 ||
                     (currentStep === 2 && !!selectedTimeSlot) ||
-                    (currentStep === 3 && canProceedFromStep3) ||
+                    (currentStep === 3 && canProceedFromStep3 && (availableSeats === null || groupSize <= availableSeats)) ||
                     (currentStep === 4 && canProceedFromStep4)
                   }
                 />
