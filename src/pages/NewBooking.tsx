@@ -26,6 +26,7 @@ import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { bookingService } from "@/services/bookingService";
+import { slotService } from "@/services/slotService";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
@@ -421,6 +422,19 @@ const NewBooking = () => {
     setIsProcessing(true);
 
     try {
+      // 🔒 เช็คที่นั่งว่างก่อนบันทึก (Double Check)
+      console.log('🔍 Checking seat availability...');
+      const canBook = await slotService.canBook(selectedDate, groupSize);
+      
+      if (!canBook) {
+        toast.error("😢 ขออภัย ที่นั่งไม่เพียงพอ กรุณาเลือกวันใหม่");
+        setIsProcessing(false);
+        setTimeout(() => navigate("/"), 2000);
+        return;
+      }
+
+      console.log('✅ Seat available, proceeding with booking...');
+      
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const selectedSlot = timeSlots.find(slot => slot.id === selectedTimeSlot);
@@ -491,6 +505,7 @@ const NewBooking = () => {
     leader,
     members,
     paymentMethod,
+    navigate,
   ]);
 
   const canProceedFromStep3 = useMemo(
