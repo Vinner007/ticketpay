@@ -281,7 +281,7 @@ const Index = () => {
           <div className="text-lg md:text-xl mb-12 text-muted-foreground">
             <span className="text-primary font-semibold">2 เรื่องราวสยองขวัญ</span> • 
             <span className="mx-2">210 รอบ</span> • 
-            <span className="mx-2">1,470 ที่นั่ง</span> • 
+            <span className="mx-2">1,470 คน</span> • 
             <span className="mx-2">3 วัน</span>
           </div>
 
