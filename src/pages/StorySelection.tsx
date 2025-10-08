@@ -187,7 +187,7 @@ const StorySelection = () => {
                   </p>
                 </div>
 
-                {/* Stats Row */}
+                {/* Stats Row - แก้ไข "ที่นั่ง" เป็น "คน" */}
                 <div className="grid grid-cols-2 gap-3 py-3 border-y border-border">
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <div className="text-2xl font-bold text-primary">36</div>
@@ -195,7 +195,7 @@ const StorySelection = () => {
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <div className="text-2xl font-bold text-secondary">252</div>
-                    <div className="text-xs text-muted-foreground">ที่นั่ง/เรื่อง</div>
+                    <div className="text-xs text-muted-foreground">คน/เรื่อง</div>
                   </div>
                 </div>
 
@@ -224,7 +224,7 @@ const StorySelection = () => {
 
         {/* Info Sections with Enhanced Design */}
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Main Stats with Halloween Theme */}
+          {/* Main Stats with Halloween Theme - แก้ "ที่นั่ง" เป็น "คน" */}
           <Card className="relative overflow-hidden p-8 bg-gradient-to-br from-card via-card to-primary/5 border-2 border-primary/30 shadow-2xl">
             <div className="absolute top-0 right-0 opacity-5">
               <Ghost className="h-64 w-64 text-primary" />
@@ -255,7 +255,7 @@ const StorySelection = () => {
                     >
                       504
                     </div>
-                    <p className="text-sm font-semibold mb-1">ที่นั่งรวมทั้งหมด</p>
+                    <p className="text-sm font-semibold mb-1">คนรวมทั้งหมด</p>
                     <p className="text-xs text-muted-foreground">(252 คนต่อเรื่อง)</p>
                   </div>
                 </div>
