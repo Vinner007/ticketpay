@@ -25,6 +25,7 @@ import {
 import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
+import { bookingService } from "@/services/bookingService";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
@@ -450,6 +451,18 @@ const NewBooking = () => {
         createdAt: new Date().toISOString(),
       };
 
+      // 🔥 บันทึกลง Supabase Database
+      console.log('💾 Saving booking to Supabase...');
+      const result = await bookingService.createBooking(newBooking);
+      
+      if (!result.success) {
+        console.error('❌ Supabase error:', result.error);
+        throw new Error(result.error || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่');
+      }
+
+      console.log('✅ Booking saved successfully to Supabase:', result.data);
+
+      // Backup ใน localStorage
       const existingBookings = JSON.parse(
         localStorage.getItem("bookings") || "[]"
       );
@@ -460,16 +473,17 @@ const NewBooking = () => {
 
       setBooking(newBooking);
       setCurrentStep(6);
-      toast.success("🎉 จองสำเร็จ! เตรียมตัวสนุกกับงาน Halloween กันเถอะ!");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
-      console.error("Payment error:", error);
+      toast.success("🎉 จองสำเร็จ! บันทึกข้อมูลลง Database แล้ว");
+    } catch (error: any) {
+      console.error("❌ Payment error:", error);
+      toast.error(`เกิดข้อผิดพลาด: ${error.message || 'กรุณาลองใหม่'}`);
     } finally {
       setIsProcessing(false);
     }
   }, [
     selectedDate,
     selectedTimeSlot,
+    selectedStory,
     groupSize,
     subtotal,
     total,
