@@ -76,7 +76,7 @@ export const DateCard = ({
 
       <div className="flex items-center justify-center gap-2 mb-4 text-muted-foreground">
         <Users className="w-4 h-4" />
-        <span className="text-sm">เหลือที่ว่าง: {availableSlots} กลุ่ม</span>
+        <span className="text-sm">เหลือที่ว่าง: {availableSlots} คน</span>
       </div>
 
       <div className="text-center mb-6">
