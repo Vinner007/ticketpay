@@ -351,43 +351,43 @@ const Index = () => {
         </div>
       </section>
 
-   {/* Footer */}
-<footer className="relative py-12 bg-card border-t-2 border-border">
-  <div className="container mx-auto px-4">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-      <div>
-        <h3 className="text-2xl font-spooky text-primary mb-4">THE HOMICIDE BLOOD 2025</h3>
-        <p className="text-muted-foreground">
-          งานฮาโลวีนสุดสยองที่ยิ่งใหญ่ที่สุดแห่งปี
-        </p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold mb-4">ติดต่อเรา</h4>
-        <p className="text-muted-foreground">Email: info@halloweennight.com</p>
-        <p className="text-muted-foreground">Tel: 02-XXX-XXXX</p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold mb-4">สถานที่</h4>
-        <p className="text-muted-foreground">ตึก 4 ชั้น 1,2</p>
-        <p className="text-muted-foreground">มหาวิทยาลัยศรีปทุม กรุงเทพฯ</p>
-      </div>
-    </div>
-    <div className="text-center text-muted-foreground border-t border-border pt-8">
-      <p>
-        © 2025{" "}
-        
-          href="https://www.cxntrolx.in.th/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:text-primary/80 transition-colors duration-300 underline font-semibold"
-        >
-          Cxntrolx
-        </a>
-        . All rights reserved.
-      </p>
-    </div>
-  </div>
-</footer>
+      {/* Footer */}
+      <footer className="relative py-12 bg-card border-t-2 border-border">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <h3 className="text-2xl font-spooky text-primary mb-4">THE HOMICIDE BLOOD 2025</h3>
+              <p className="text-muted-foreground">
+                งานฮาโลวีนสุดสยองที่ยิ่งใหญ่ที่สุดแห่งปี
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">ติดต่อเรา</h4>
+              <p className="text-muted-foreground">Email: info@halloweennight.com</p>
+              <p className="text-muted-foreground">Tel: 02-XXX-XXXX</p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">สถานที่</h4>
+              <p className="text-muted-foreground">ตึก 4 ชั้น 1,2</p>
+              <p className="text-muted-foreground">มหาวิทยาลัยศรีปทุม กรุงเทพฯ</p>
+            </div>
+          </div>
+          <div className="text-center text-muted-foreground border-t border-border pt-8">
+            <p>
+              © 2025{" "}
+              
+                href="https://www.cxntrolx.in.th/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors duration-300 underline font-semibold"
+              >
+                Cxntrolx
+              </a>
+              . All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
