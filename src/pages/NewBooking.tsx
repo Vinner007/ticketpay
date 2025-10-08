@@ -25,17 +25,42 @@ import {
 import { ArrowLeft, Calendar, MapPin, Clock, Info, X } from "lucide-react";
 import { Leader, Member, Booking } from "@/types/booking";
 import { toast } from "sonner";
-import {
-  validatePromoCode,
-  incrementPromoUsage,
-  createBooking,
-  generateBookingId,
-  generateConfirmationCode,
-  generateQRCodeData,
-} from "@/lib/supabaseHelpers";
 
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
+
+const PROMO_CODES = [
+  {
+    code: "HALLOWEEN10",
+    type: "percentage" as const,
+    value: 10,
+    minPurchase: 0,
+    maxDiscount: 100,
+    description: "ลด 10%",
+  },
+  {
+    code: "EARLYBIRD",
+    type: "fixed" as const,
+    value: 50,
+    minPurchase: 400,
+    description: "ลดทันที 50 บาท",
+  },
+  {
+    code: "SCARY20",
+    type: "percentage" as const,
+    value: 20,
+    minPurchase: 560,
+    maxDiscount: 150,
+    description: "ลด 20%",
+  },
+  {
+    code: "GROUP7FOR6",
+    type: "fixed" as const,
+    value: 80,
+    minPurchase: 560,
+    description: "โปรโมชั่น มา 7 จ่าย 6",
+  },
+];
 
 const dateLabels: Record<string, string> = {
   "2025-10-29": "29 ตุลาคม 2568 (วันพุธ)",
@@ -251,26 +276,51 @@ const NewBooking = () => {
     navigate("/");
   }, [navigate]);
 
-  const handleApplyPromo = useCallback(
-    async (code: string) => {
-      try {
-        const result = await validatePromoCode(code, subtotal);
-        if ("error" in result) {
-          toast.error(result.error);
-          return false;
-        }
+  const validatePromoCode = useCallback(
+    (code: string) => {
+      const promo = PROMO_CODES.find(
+        (p) => p.code.toUpperCase() === code.toUpperCase()
+      );
 
-        setAppliedPromo({ code: result.code, discount: result.discount });
-        setPromoInput("");
-        toast.success(`✅ ใช้โค้ด ${result.code} สำเร็จ! ลด ${result.discount} บาท`);
-        return true;
-      } catch (error) {
-        console.error("Error applying promo code:", error);
-        toast.error("เกิดข้อผิดพลาดในการใช้โค้ด");
-        return false;
+      if (!promo) {
+        return { error: "❌ รหัสไม่ถูกต้อง กรุณาลองใหม่" };
       }
+
+      if (promo.minPurchase && subtotal < promo.minPurchase) {
+        return {
+          error: `❌ ใช้ได้กับยอดขั้นต่ำ ${promo.minPurchase} บาท`,
+        };
+      }
+
+      let discount = 0;
+      if (promo.type === "percentage") {
+        discount = Math.floor((subtotal * promo.value) / 100);
+        if (promo.maxDiscount) {
+          discount = Math.min(discount, promo.maxDiscount);
+        }
+      } else {
+        discount = promo.value;
+      }
+
+      return { discount, code: promo.code };
     },
     [subtotal]
+  );
+
+  const handleApplyPromo = useCallback(
+    (code: string) => {
+      const result = validatePromoCode(code);
+      if ("error" in result) {
+        toast.error(result.error);
+        return false;
+      }
+
+      setAppliedPromo({ code: result.code, discount: result.discount });
+      setPromoInput("");
+      toast.success(`✅ ใช้โค้ด ${result.code} สำเร็จ! ลด ${result.discount} บาท`);
+      return true;
+    },
+    [validatePromoCode]
   );
 
   const handleRemovePromo = useCallback(() => {
@@ -370,75 +420,43 @@ const NewBooking = () => {
     setIsProcessing(true);
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const selectedSlot = timeSlots.find(slot => slot.id === selectedTimeSlot);
-      const bookingId = generateBookingId();
-      const confirmationCode = generateConfirmationCode();
-      const qrCodeData = generateQRCodeData(bookingId);
 
-      // Create booking in Supabase
-      const bookingData = {
-        booking_id: bookingId,
-        confirmation_code: confirmationCode,
-        story_theme: selectedStory as "cursed-cinema" | "lesson-blood",
-        event_date: selectedDate,
-        time_slot: selectedSlot?.label || "",
-        time_slot_time: selectedSlot?.time || "",
-        group_size: groupSize,
-        ticket_price: TICKET_PRICE,
-        subtotal,
-        promo_code: appliedPromo?.code || null,
-        promo_discount: appliedPromo?.discount || 0,
-        total_price: total,
-        leader_first_name: leader.firstName,
-        leader_last_name: leader.lastName,
-        leader_nickname: leader.nickname || null,
-        leader_email: leader.email,
-        leader_phone: leader.phone,
-        leader_age: leader.age,
-        leader_line_id: leader.lineId || null,
-        members: members as any,
-        payment_method: paymentMethod,
-        payment_status: "completed" as const,
-        qr_code_data: qrCodeData,
-        check_in_status: "not-checked-in" as const,
-        source: "website" as const,
-      };
-
-      const createdBooking = await createBooking(bookingData);
-
-      // Increment promo code usage if promo was applied
-      if (appliedPromo?.code) {
-        await incrementPromoUsage(appliedPromo.code);
-      }
-
-      // Clear draft
-      localStorage.removeItem("booking_draft");
-
-      // Convert to display format
       const newBooking: Booking = {
-        bookingId: createdBooking.booking_id,
-        confirmationCode: createdBooking.confirmation_code,
-        storyTheme: createdBooking.story_theme,
-        eventDate: createdBooking.event_date,
-        timeSlot: createdBooking.time_slot,
-        timeSlotTime: createdBooking.time_slot_time,
-        groupSize: createdBooking.group_size,
-        ticketPrice: createdBooking.ticket_price,
-        subtotal: createdBooking.subtotal,
+        bookingId: `HW${Date.now().toString().slice(-6)}`,
+        confirmationCode: Math.random()
+          .toString(36)
+          .substring(2, 10)
+          .toUpperCase(),
+        storyTheme: selectedStory,
+        eventDate: selectedDate,
+        timeSlot: selectedSlot?.label || "",
+        timeSlotTime: selectedSlot?.time || "",
+        groupSize,
+        ticketPrice: TICKET_PRICE,
+        subtotal,
         promoCode: appliedPromo,
-        totalPrice: createdBooking.total_price,
+        totalPrice: total,
         leader,
         members,
-        paymentMethod: createdBooking.payment_method,
-        paymentStatus: createdBooking.payment_status,
-        qrCodeData: createdBooking.qr_code_data || undefined,
-        bookingDate: createdBooking.booking_date || createdBooking.created_at || new Date().toISOString(),
-        checkInStatus: createdBooking.check_in_status || undefined,
-        checkInTime: createdBooking.check_in_time || undefined,
-        checkInBy: createdBooking.check_in_by || undefined,
-        source: createdBooking.source || "website",
-        createdAt: createdBooking.created_at || new Date().toISOString(),
+        paymentMethod,
+        paymentStatus: "completed",
+        qrCodeData: `HW${Date.now()}`,
+        bookingDate: new Date().toISOString(),
+        checkInStatus: "not-checked-in",
+        source: "website",
+        createdAt: new Date().toISOString(),
       };
+
+      const existingBookings = JSON.parse(
+        localStorage.getItem("bookings") || "[]"
+      );
+      existingBookings.push(newBooking);
+      localStorage.setItem("bookings", JSON.stringify(existingBookings));
+
+      localStorage.removeItem("booking_draft");
 
       setBooking(newBooking);
       setCurrentStep(6);
@@ -450,7 +468,6 @@ const NewBooking = () => {
       setIsProcessing(false);
     }
   }, [
-    selectedStory,
     selectedDate,
     selectedTimeSlot,
     groupSize,

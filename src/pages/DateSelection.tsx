@@ -5,17 +5,12 @@ import { SpiderWeb } from "@/components/SpiderWeb";
 import { AnimatedBats } from "@/components/AnimatedBats";
 import { DateCard } from "@/components/DateCard";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { useBookings } from "@/hooks/useBookings";
+import { useEffect } from "react";
 
 const DateSelection = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedStory = searchParams.get("story");
-  const { bookings } = useBookings();
-  
-  // Maximum groups per day (6 groups per time slot × 6 time slots)
-  const MAX_GROUPS_PER_DAY = 36;
 
   useEffect(() => {
     if (!selectedStory) {
@@ -36,24 +31,14 @@ const DateSelection = () => {
 
   const currentStory = selectedStory ? storyInfo[selectedStory as keyof typeof storyInfo] : null;
 
-  // Calculate booked groups per date for selected story
-  const bookedGroupsByDate = useMemo(() => {
-    const grouped: Record<string, number> = {};
-    bookings
-      .filter(booking => booking.storyTheme === selectedStory)
-      .forEach(booking => {
-        const date = booking.eventDate;
-        grouped[date] = (grouped[date] || 0) + 1;
-      });
-    return grouped;
-  }, [bookings, selectedStory]);
-
   const dates = [
     {
       date: 29,
       dayName: "วันพุธ",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 36,
+      status: "available" as const,
       dateValue: "2025-10-29",
     },
     {
@@ -61,6 +46,8 @@ const DateSelection = () => {
       dayName: "วันพฤหัสบดี",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 36,
+      status: "available" as const,
       dateValue: "2025-10-30",
     },
     {
@@ -68,18 +55,11 @@ const DateSelection = () => {
       dayName: "วันศุกร์",
       month: "ตุลาคม",
       year: 2568,
+      availableSlots: 36,
+      status: "available" as const,
       dateValue: "2025-10-31",
     },
-  ].map(date => {
-    const booked = bookedGroupsByDate[date.dateValue] || 0;
-    const available = MAX_GROUPS_PER_DAY - booked;
-    const status: "available" | "full" = available > 0 ? "available" : "full";
-    return {
-      ...date,
-      availableSlots: available,
-      status,
-    };
-  });
+  ];
 
   return (
     <div className="relative min-h-screen py-12 sm:py-16 md:py-20">
