@@ -14,9 +14,12 @@ export const ProtectedRoute = ({ children, requiredPermission }: ProtectedRouteP
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const currentSession = getAdminSession();
-    setSession(currentSession);
-    setIsLoading(false);
+    const checkSession = async () => {
+      const currentSession = await getAdminSession();
+      setSession(currentSession);
+      setIsLoading(false);
+    };
+    checkSession();
   }, []);
 
   if (isLoading) {

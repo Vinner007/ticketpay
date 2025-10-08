@@ -18,15 +18,18 @@ export const AdminLogin = () => {
 
   useEffect(() => {
     // Check if already logged in
-    const session = getAdminSession();
-    if (session) {
-      navigate("/admin/dashboard");
-    }
+    const checkSession = async () => {
+      const session = await getAdminSession();
+      if (session) {
+        navigate("/admin/dashboard");
+      }
+    };
+    checkSession();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("กรุณากรอกอีเมลและรหัสผ่าน");
       return;
@@ -34,19 +37,21 @@ export const AdminLogin = () => {
 
     setIsLoading(true);
 
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const user = await loginAdmin(email, password);
 
-    const user = loginAdmin(email, password);
-
-    if (user) {
-      toast.success("เข้าสู่ระบบสำเร็จ");
-      navigate("/admin/dashboard");
-    } else {
-      toast.error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      if (user) {
+        toast.success("เข้าสู่ระบบสำเร็จ");
+        navigate("/admin/dashboard");
+      } else {
+        toast.error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -145,15 +150,11 @@ export const AdminLogin = () => {
             </Button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Info Note */}
           <div className="mt-6 rounded-lg border border-muted bg-muted/50 p-4">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">
-              Demo Accounts:
+            <p className="text-xs text-muted-foreground">
+              ใช้อีเมลและรหัสผ่านที่ได้รับจากผู้ดูแลระบบเพื่อเข้าสู่ระบบ
             </p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>Super Admin: admin@ghoulgate.com / Admin@2025</p>
-              <p>Staff: staff@ghoulgate.com / Staff@2025</p>
-            </div>
           </div>
         </CardContent>
       </Card>

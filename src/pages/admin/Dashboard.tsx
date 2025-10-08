@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -29,9 +29,14 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useStats } from "@/hooks/useStats";
+import { useBookings } from "@/hooks/useBookings";
 
 export const Dashboard = () => {
-  const [stats, setStats] = useState({
+  const { data: statsData, isLoading: statsLoading } = useStats();
+  const { bookings, isLoading: bookingsLoading } = useBookings();
+
+  const stats = statsData || {
     totalBookings: 0,
     totalRevenue: 0,
     totalAttendees: 0,
@@ -41,30 +46,7 @@ export const Dashboard = () => {
       revenue: 0,
       attendees: 0,
     },
-  });
-
-  useEffect(() => {
-    // Load bookings and calculate stats
-    const bookingsData = localStorage.getItem("admin_bookings");
-    if (bookingsData) {
-      const bookings = JSON.parse(bookingsData);
-      const totalBookings = bookings.length;
-      const totalRevenue = bookings.reduce((sum: number, b: any) => sum + b.totalPrice, 0);
-      const totalAttendees = bookings.reduce((sum: number, b: any) => sum + b.groupSize, 0);
-      
-      setStats({
-        totalBookings,
-        totalRevenue,
-        totalAttendees,
-        checkedInToday: 145,
-        todayIncrease: {
-          bookings: 12,
-          revenue: 5760,
-          attendees: 72,
-        },
-      });
-    }
-  }, []);
+  };
 
   const dateStats = [
     {

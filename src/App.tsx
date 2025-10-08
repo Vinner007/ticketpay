@@ -19,10 +19,6 @@ import { Reports } from "./pages/admin/Reports";
 import { Messages } from "./pages/admin/Messages";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
-import { initializeMockData } from "./lib/mockData";
-
-// Initialize mock data on app load
-initializeMockData();
 
 const queryClient = new QueryClient();
 

@@ -38,8 +38,8 @@ export const AdminSidebar = ({ session, isCollapsed }: AdminSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logoutAdmin();
+  const handleLogout = async () => {
+    await logoutAdmin();
     toast.success("ออกจากระบบสำเร็จ");
     navigate("/admin/login");
   };
