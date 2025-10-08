@@ -7,6 +7,8 @@ import { AnimatedBats } from "@/components/AnimatedBats";
 import { ArrowLeft, Star, Clock, Users, Calendar, Skull, Ghost, AlertTriangle, CheckCircle } from "lucide-react";
 import story1 from "@/assets/123799.jpg";
 import story2 from "@/assets/123800.jpg";
+import { useMemo } from "react";
+import { useBookings } from "@/hooks/useBookings";
 
 const stories = [
   {
@@ -43,6 +45,15 @@ const stories = [
 
 const StorySelection = () => {
   const navigate = useNavigate();
+  const { bookings } = useBookings();
+
+  // Maximum capacity: 36 groups per day × 3 days × 2 stories = 216 total groups
+  const MAX_GROUPS_PER_STORY = 108; // 36 groups/day × 3 days
+  const TOTAL_MAX_GROUPS = 216;
+
+  // Calculate booked groups
+  const totalBookedGroups = useMemo(() => bookings.length, [bookings]);
+  const availableGroups = TOTAL_MAX_GROUPS - totalBookedGroups;
 
   const handleStorySelect = (storyId: string) => {
     localStorage.setItem("selectedStory", storyId);
@@ -240,10 +251,10 @@ const StorySelection = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
                   <div className="relative text-center p-6 bg-card/50 backdrop-blur rounded-xl border-2 border-orange-500/30 hover:border-orange-500 transition-all duration-300 hover:scale-105">
                     <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-600 mb-2 animate-pulse-slow">
-                      72
+                      {availableGroups}
                     </div>
-                    <p className="text-sm font-semibold mb-1">รอบรวมทั้ง 2 เรื่อง</p>
-                    <p className="text-xs text-muted-foreground">(36 รอบต่อเรื่อง)</p>
+                    <p className="text-sm font-semibold mb-1">เหลือที่ว่าง</p>
+                    <p className="text-xs text-muted-foreground">(จาก {TOTAL_MAX_GROUPS} กลุ่มทั้งหมด)</p>
                   </div>
                 </div>
                 <div className="relative group">
