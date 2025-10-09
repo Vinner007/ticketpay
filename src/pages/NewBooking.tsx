@@ -31,6 +31,13 @@ import { supabase } from "@/lib/supabase";
 const TICKET_PRICE = 80;
 const PAYMENT_TIME_LIMIT = 15 * 60;
 
+// 🔥 อัพเดท: จำนวนที่นั่งสูงสุดตามวัน
+const MAX_CAPACITY_PER_DAY: Record<string, number> = {
+  "2025-10-29": 252, // 6 กลุ่ม × 6 รอบ × 7 คน = 252
+  "2025-10-30": 231, // (3 กลุ่ม × 6 รอบ + 3 กลุ่ม × 5 รอบ) × 7 = 231 (มีพิธีเปิดงาน)
+  "2025-10-31": 252, // 6 กลุ่ม × 6 รอบ × 7 คน = 252
+};
+
 const PROMO_CODES = [
   {
     code: "HALLOWEEN10",
@@ -70,29 +77,36 @@ const dateLabels: Record<string, string> = {
   "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
 };
 
-const timeSlots = [
-  {
-    id: "morning",
-    label: "รอบเช้า",
-    time: "10:00 - 12:00 น.",
-    rounds: "รอบที่ 1-2",
-    description: "เริ่มลงทะเบียน 09:30 น.",
-  },
-  {
-    id: "afternoon",
-    label: "รอบเที่ยง",
-    time: "12:30 - 14:30 น.",
-    rounds: "รอบที่ 3-4",
-    description: "หลังพักเบรก 30 นาที",
-  },
-  {
-    id: "evening",
-    label: "รอบเย็น",
-    time: "15:00 - 17:00 น.",
-    rounds: "รอบที่ 5-6",
-    description: "รอบสุดท้ายของวัน",
-  },
-];
+// 🔥 อัพเดท: รอบเวลาแยกตามวัน
+const getTimeSlots = (date: string) => {
+  const baseSlots = [
+    {
+      id: "morning",
+      label: "รอบเช้า",
+      time: "10:00 - 12:00 น.",
+      rounds: "รอบที่ 1-2",
+      description: "เริ่มลงทะเบียน 09:30 น.",
+    },
+    {
+      id: "afternoon",
+      label: "รอบเที่ยง",
+      time: "12:30 - 14:30 น.",
+      rounds: "รอบที่ 3-4",
+      description: date === "2025-10-30" 
+        ? "มีพิธีเปิดงาน 13:00-13:30" 
+        : "หลังพักเบรก 30 นาที",
+    },
+    {
+      id: "evening",
+      label: "รอบเย็น",
+      time: "15:00 - 17:00 น.",
+      rounds: "รอบที่ 5-6",
+      description: "รอบสุดท้ายของวัน",
+    },
+  ];
+
+  return baseSlots;
+};
 
 // 🔥 ฟังก์ชันเช็คที่นั่งว่าง (Real-time)
 const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<{ 
@@ -109,14 +123,20 @@ const checkSeatAvailability = async (eventDate: string, groupSize: number): Prom
 
     if (error) {
       console.error('❌ Error checking availability:', error);
-      return { available: true, currentCapacity: 0, maxCapacity: 0 }; // ถ้า error ให้ผ่านไปก่อน
+      // ใช้ค่า default จาก MAX_CAPACITY_PER_DAY
+      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
+      return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
     }
 
-    if (!data) return { available: true, currentCapacity: 0, maxCapacity: 0 };
+    if (!data) {
+      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
+      return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
+    }
 
     const hasAvailability = data.available_capacity >= groupSize;
     
     console.log('📊 Seat check:', { 
+      date: eventDate,
       available: data.available_capacity, 
       max: data.max_capacity,
       needed: groupSize, 
@@ -130,7 +150,8 @@ const checkSeatAvailability = async (eventDate: string, groupSize: number): Prom
     };
   } catch (error) {
     console.error('❌ Error in seat check:', error);
-    return { available: true, currentCapacity: 0, maxCapacity: 0 };
+    const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
+    return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
   }
 };
 
@@ -172,6 +193,12 @@ const NewBooking = () => {
     leader?: { [key: string]: string };
     members?: { [key: number]: { [key: string]: string } };
   }>({});
+
+  // 🔥 Get time slots based on selected date
+  const timeSlots = useMemo(() => getTimeSlots(selectedDate), [selectedDate]);
+
+  // 🔥 Get max capacity based on selected date
+  const maxCapacity = useMemo(() => MAX_CAPACITY_PER_DAY[selectedDate] || 252, [selectedDate]);
 
   const subtotal = useMemo(() => {
     return groupSize * TICKET_PRICE;
@@ -619,6 +646,7 @@ const NewBooking = () => {
     leader,
     members,
     paymentMethod,
+    timeSlots,
     navigate,
   ]);
 
@@ -649,6 +677,30 @@ const NewBooking = () => {
                 </p>
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   มีที่นั่งเหลือเพียง <strong className="text-warning">{availableSeats} ที่</strong> สำหรับวันที่เลือก
+                  {selectedDate === "2025-10-30" && (
+                    <span className="block mt-1 text-warning">
+                      📌 หมายเหตุ: วันที่ 30 ต.ค. มีที่นั่งทั้งหมด {maxCapacity} ที่ (มีพิธีเปิดงาน)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Special Event Banner for Oct 30 */}
+        {selectedDate === "2025-10-30" && currentStep >= 1 && currentStep <= 4 && (
+          <Card className="mb-4 sm:mb-6 p-3 sm:p-4 bg-accent/10 border-accent">
+            <div className="flex items-center gap-3">
+              <Info className="w-5 h-5 text-accent flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-accent text-sm sm:text-base">
+                  🎉 พิธีเปิดงานพิเศษ!
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  วันที่ 30 ตุลาคม มีพิธีเปิดงานโดย<strong>ท่านรองวิรัส</strong> เวลา 13:00-13:30 น.
+                  <br />
+                  รอบบ่ายจะปรับเวลาเล็กน้อย (ที่นั่ง {maxCapacity} ที่)
                 </p>
               </div>
             </div>
@@ -720,7 +772,7 @@ const NewBooking = () => {
                     availableSeats < 30 ? 'text-warning' : 'text-success'
                   }`}>
                     {availableSeats}
-                  </span> / {availableSeats + groupSize} ที่
+                  </span> / {maxCapacity} ที่
                   {isCheckingSeats && <span className="ml-2 text-xs">(กำลังอัพเดท...)</span>}
                 </p>
               )}
@@ -754,10 +806,20 @@ const NewBooking = () => {
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span>10:00 - 17:00 น.</span>
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-muted-foreground">
+                      <div className="flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-muted-foreground mb-2">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</span>
                       </div>
+                      {selectedDate === "2025-10-30" && (
+                        <div className="mt-3 p-3 bg-accent/20 border border-accent rounded-lg">
+                          <p className="text-xs sm:text-sm text-accent font-semibold">
+                            🎉 วันนี้มีพิธีเปิดงานพิเศษ! (13:00-13:30)
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ที่นั่งทั้งหมด: {maxCapacity} ที่
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -810,6 +872,12 @@ const NewBooking = () => {
                               <p className="text-xs sm:text-sm text-muted-foreground">
                                 {slot.rounds} • {slot.description}
                               </p>
+                              {selectedDate === "2025-10-30" && slot.id === "afternoon" && (
+                                <div className="mt-2 flex items-center gap-1 text-xs text-accent">
+                                  <Info className="w-3 h-3" />
+                                  <span>มีพิธีเปิดงานในรอบนี้</span>
+                                </div>
+                              )}
                             </div>
                             <div
                               className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
@@ -1132,6 +1200,21 @@ const NewBooking = () => {
             </div>
 
             <div className="space-y-2">
+              <p className="font-semibold">จำนวนที่นั่งแต่ละวัน:</p>
+              <ul className="list-disc list-inside pl-2 space-y-1">
+                <li>29 ตุลาคม: 252 ที่ (36 รอบ)</li>
+                <li>30 ตุลาคม: 231 ที่ (33 รอบ - มีพิธีเปิดงาน)</li>
+                <li>31 ตุลาคม: 252 ที่ (36 รอบ)</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 bg-accent/10 p-3 rounded-lg">
+              <p className="font-semibold text-accent">🎉 พิธีเปิดงานพิเศษ!</p>
+              <p>วันที่ 30 ตุลาคม เวลา 13:00-13:30 น.</p>
+              <p className="text-xs">โดย <strong>ท่านรองวิรัส</strong></p>
+            </div>
+
+            <div className="space-y-2">
               <p className="font-semibold text-destructive">กติกาสำคัญ:</p>
               <ul className="list-decimal list-inside space-y-2 pl-2">
                 <li>กรุณามาถึงก่อนเวลา 30 นาที เพื่อลงทะเบียนและเลือกรอบในการเล่น</li>
@@ -1158,6 +1241,7 @@ const NewBooking = () => {
               <p>• เริ่มลงทะเบียน 09:30 น.</p>
               <p>• เริ่มเล่น 10:00 - 17:00 น.</p>
               <p>• รอบละ 10 นาที</p>
+              <p>• พักเบรก 12:00-12:30 และ 14:30-15:00 น.</p>
             </div>
           </div>
           <AlertDialogFooter>
