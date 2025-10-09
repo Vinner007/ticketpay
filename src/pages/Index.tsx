@@ -26,6 +26,7 @@ import gallery2 from "@/assets/gallery-2.jpg";
 import gallery3 from "@/assets/gallery-3.jpg";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { MAX_CAPACITY_PER_DAY } from "@/config/constants";
 
 interface DailySummary {
   event_date: string;
@@ -188,7 +189,7 @@ const Index = () => {
     },
   ];
 
-  // 🔥 ข้อมูลวันที่ - ดึงจาก Database
+  // 🔥 ข้อมูลวันที่ - ดึงจาก Database พร้อม Max Capacity ที่ถูกต้อง
   const dates = [
     {
       date: 29,
@@ -196,6 +197,7 @@ const Index = () => {
       month: "ตุลาคม",
       year: 2568,
       availableSlots: dailySummaries.find(s => s.event_date === "2025-10-29")?.available_capacity || 0,
+      maxCapacity: MAX_CAPACITY_PER_DAY["2025-10-29"],
       status: getAvailabilityStatus("2025-10-29").status,
       dateValue: "2025-10-29",
     },
@@ -205,8 +207,10 @@ const Index = () => {
       month: "ตุลาคม",
       year: 2568,
       availableSlots: dailySummaries.find(s => s.event_date === "2025-10-30")?.available_capacity || 0,
+      maxCapacity: MAX_CAPACITY_PER_DAY["2025-10-30"],
       status: getAvailabilityStatus("2025-10-30").status,
       dateValue: "2025-10-30",
+      isSpecial: true, // 🎉 วันพิเศษ
     },
     {
       date: 31,
@@ -214,6 +218,7 @@ const Index = () => {
       month: "ตุลาคม",
       year: 2568,
       availableSlots: dailySummaries.find(s => s.event_date === "2025-10-31")?.available_capacity || 0,
+      maxCapacity: MAX_CAPACITY_PER_DAY["2025-10-31"],
       status: getAvailabilityStatus("2025-10-31").status,
       dateValue: "2025-10-31",
     },
@@ -240,7 +245,11 @@ const Index = () => {
     },
     {
       question: "มีรอบเวลาไหนให้เลือกบ้าง?",
-      answer: "เปิดทุกวัน 10:00-17:00 น. แต่ละรอบใช้เวลา 10 นาที มีเวลาพักเบรก 12:00-12:30 และ 14:30-15:00 น. (วันที่ 30 ต.ค. มีพิธีเปิดงาน 13:00-13:30)",
+      answer: "เปิดทุกวัน 10:00-17:00 น. แบ่งเป็น 3 รอบหลัก: รอบเช้า (10:00-12:00), รอบเที่ยง (12:30-14:30), และรอบเย็น (15:00-17:00) มีเวลาพักเบรก 12:00-12:30 และ 14:30-15:00 น. **วันที่ 30 ตุลาคมมีพิธีเปิดงานพิเศษโดยท่านรองวิรัส เวลา 13:00-13:30**",
+    },
+    {
+      question: "จำนวนที่นั่งแต่ละวันเท่าไหร่?",
+      answer: "วันที่ 29 ตุลาคม: 252 ที่ (36 รอบ), วันที่ 30 ตุลาคม: 231 ที่ (33 รอบ - มีพิธีเปิดงาน), วันที่ 31 ตุลาคม: 252 ที่ (36 รอบ). รวมทั้ง 3 วันมีที่นั่งทั้งหมด 735 ที่",
     },
     {
       question: "ต้องแต่งชุดฮาโลวีนหรือไม่?",
@@ -255,6 +264,9 @@ const Index = () => {
       answer: "นำ QR code/บัตรมาแสดงที่จุดลงทะเบียน ห้ามนำโทรศัพท์เข้าไปในบ้านผีสิง (มีจุดรับฝาก) และฝากของมีค่าไว้ที่จุดรับฝาก. คำเตือน: ทั้ง 2 เรื่องมีความน่ากลัวสูงมาก ไม่เหมาะกับผู้มีโรคหัวใจ",
     },
   ];
+
+  // 🔥 คำนวณยอดรวมที่นั่งทั้งหมด
+  const totalCapacity = Object.values(MAX_CAPACITY_PER_DAY).reduce((sum, cap) => sum + cap, 0);
 
   return (
     <div className="relative min-h-screen">
@@ -280,8 +292,8 @@ const Index = () => {
           </div>
           <div className="text-lg md:text-xl mb-12 text-muted-foreground">
             <span className="text-primary font-semibold">2 เรื่องราวสยองขวัญ</span> • 
-            <span className="mx-2">210 รอบ</span> • 
-            <span className="mx-2">1,470 คน</span> • 
+            <span className="mx-2">105 รอบ</span> • 
+            <span className="mx-2">{totalCapacity} คน</span> • 
             <span className="mx-2">3 วัน</span>
           </div>
 
@@ -359,6 +371,18 @@ const Index = () => {
                     <DateCard {...date} />
                     <div className={`text-center mt-2 font-semibold ${statusInfo.color}`}>
                       {statusInfo.label}
+                    </div>
+                    {/* 🎉 แสดงข้อมูลพิเศษสำหรับวันที่ 30 */}
+                    {date.isSpecial && (
+                      <div className="text-center mt-1">
+                        <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
+                          🎉 มีพิธีเปิดงาน
+                        </span>
+                      </div>
+                    )}
+                    {/* แสดงจำนวนที่นั่งทั้งหมด */}
+                    <div className="text-center mt-1 text-xs text-muted-foreground">
+                      (ที่นั่งทั้งหมด {date.maxCapacity} ที่)
                     </div>
                   </div>
                 );
@@ -473,6 +497,9 @@ const Index = () => {
               <p className="text-muted-foreground">
                 งานฮาโลวีนสุดสยองที่ยิ่งใหญ่ที่สุดแห่งปี
               </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                ที่นั่งทั้งหมด {totalCapacity} ที่ • 3 วัน
+              </p>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">ติดต่อเรา</h4>
@@ -488,7 +515,7 @@ const Index = () => {
           <div className="text-center text-muted-foreground border-t border-border pt-8">
             <p>
               © 2025{" "}
-              <a
+              
                 href="https://www.cxntrolx.in.th/"
                 target="_blank"
                 rel="noopener noreferrer"
