@@ -11,17 +11,11 @@ import {
   MapPin,
 } from "lucide-react";
 import { Booking } from "@/types/booking";
+import { dateLabels } from "@/config/constants";
 
 interface ConfirmationSuccessProps {
   booking: Booking;
 }
-
-const dateLabels: Record<string, string> = {
-  "2025-10-28": "28 ตุลาคม 2568 (วันอังคาร)",
-  "2025-10-29": "29 ตุลาคม 2568 (วันพุธ)",
-  "2025-10-30": "30 ตุลาคม 2568 (วันพฤหัสบดี)",
-  "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
-};
 
 export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
   const navigate = useNavigate();
