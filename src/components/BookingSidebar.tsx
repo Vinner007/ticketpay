@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, Users, Tag, X, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { dateLabels } from "@/config/constants";
 
 interface BookingSidebarProps {
   selectedDate: string;
@@ -18,12 +19,6 @@ interface BookingSidebarProps {
   onProceed: () => void;
   canProceed: boolean;
 }
-
-const dateLabels: Record<string, string> = {
-  "2025-10-29": "29 ตุลาคม 2568",
-  "2025-10-30": "30 ตุลาคม 2568",
-  "2025-10-31": "31 ตุลาคม 2568",
-};
 
 export const BookingSidebar = ({
   selectedDate,
