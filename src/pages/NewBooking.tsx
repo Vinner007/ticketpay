@@ -29,15 +29,6 @@ import { bookingService } from "@/services/bookingService";
 import { supabase } from "@/lib/supabase";
 import { TICKET_PRICE, PAYMENT_TIME_LIMIT, MAX_CAPACITY_PER_DAY, PROMO_CODES, dateLabels, getTimeSlots } from "@/config/constants";
 
-// 🎯 ข้อมูลจาก CSV: 
-// - แต่ละรอบใหญ่ (เช้า/เที่ยง/เย็น): 168 คน (2 เรื่อง) = 84 คน/เรื่อง
-// - รวมต่อวัน: 504 คน (2 เรื่อง) = 252 คน/เรื่อง
-// - จำนวนรอบใหญ่: 3 รอบ
-const CAPACITY_PER_TIME_SLOT = 84; // คนต่อรอบใหญ่ต่อเรื่อง
-const TOTAL_TIME_SLOTS = 3; // จำนวนรอบใหญ่ต่อวัน (เช้า, เที่ยง, เย็น)
-const CAPACITY_PER_DAY_PER_STORY = 252; // คนต่อวันต่อเรื่อง (84 x 3)
-const TOTAL_CAPACITY_PER_DAY = 504; // รวมทั้ง 2 เรื่อง
-
 // 🔥 ฟังก์ชันเช็คที่นั่งว่าง (Real-time)
 const checkSeatAvailability = async (eventDate: string, groupSize: number): Promise<{ 
   available: boolean; 
@@ -54,12 +45,12 @@ const checkSeatAvailability = async (eventDate: string, groupSize: number): Prom
     if (error) {
       console.error('❌ Error checking availability:', error);
       // ใช้ค่า default จาก MAX_CAPACITY_PER_DAY
-      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || CAPACITY_PER_DAY_PER_STORY;
+      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
       return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
     }
 
     if (!data) {
-      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || CAPACITY_PER_DAY_PER_STORY;
+      const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
       return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
     }
 
@@ -80,7 +71,7 @@ const checkSeatAvailability = async (eventDate: string, groupSize: number): Prom
     };
   } catch (error) {
     console.error('❌ Error in seat check:', error);
-    const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || CAPACITY_PER_DAY_PER_STORY;
+    const defaultMax = MAX_CAPACITY_PER_DAY[eventDate] || 252;
     return { available: true, currentCapacity: defaultMax, maxCapacity: defaultMax };
   }
 };
@@ -127,8 +118,8 @@ const NewBooking = () => {
   // 🔥 Get time slots based on selected date
   const timeSlots = useMemo(() => getTimeSlots(selectedDate), [selectedDate]);
 
-  // 🔥 Get max capacity based on selected date (per story)
-  const maxCapacity = useMemo(() => MAX_CAPACITY_PER_DAY[selectedDate] || CAPACITY_PER_DAY_PER_STORY, [selectedDate]);
+  // 🔥 Get max capacity based on selected date
+  const maxCapacity = useMemo(() => MAX_CAPACITY_PER_DAY[selectedDate] || 252, [selectedDate]);
 
   const subtotal = useMemo(() => {
     return groupSize * TICKET_PRICE;
@@ -740,20 +731,6 @@ const NewBooking = () => {
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</span>
                       </div>
-                      <div className="mt-4 p-3 bg-muted/50 border border-border rounded-lg">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          📊 <strong>ข้อมูลที่นั่ง:</strong>
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                          • แต่ละรอบใหญ่: {CAPACITY_PER_TIME_SLOT} ที่/เรื่อง
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          • รวม {TOTAL_TIME_SLOTS} รอบ/วัน = {CAPACITY_PER_DAY_PER_STORY} ที่/เรื่อง
-                        </p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          • รวมทั้ง 2 เรื่อง = {TOTAL_CAPACITY_PER_DAY} ที่/วัน
-                        </p>
-                      </div>
                       {selectedDate === "2025-10-30" && (
                         <div className="mt-3 p-3 bg-accent/20 border border-accent rounded-lg">
                           <p className="text-xs sm:text-sm text-accent font-semibold">
@@ -794,12 +771,6 @@ const NewBooking = () => {
                       </h2>
                     </div>
 
-                    <div className="bg-accent/10 border border-accent rounded-lg p-3 sm:p-4 mb-4">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        💡 <strong>หมายเหตุ:</strong> แต่ละรอบใหญ่มีที่นั่ง <strong>{CAPACITY_PER_TIME_SLOT} ที่</strong> สำหรับเรื่องนี้
-                      </p>
-                    </div>
-
                     <div className="space-y-3">
                       {timeSlots.map((slot) => (
                         <button
@@ -821,9 +792,6 @@ const NewBooking = () => {
                               </p>
                               <p className="text-xs sm:text-sm text-muted-foreground">
                                 {slot.rounds} • {slot.description}
-                              </p>
-                              <p className="text-xs text-accent mt-1">
-                                📊 ที่นั่งรอบนี้: {CAPACITY_PER_TIME_SLOT} ที่
                               </p>
                               {selectedDate === "2025-10-30" && slot.id === "afternoon" && (
                                 <div className="mt-2 flex items-center gap-1 text-xs text-accent">
@@ -1152,21 +1120,12 @@ const NewBooking = () => {
               <p>ตึก 4 ชั้น 1 และ 2 มหาวิทยาลัยศรีปทุม</p>
             </div>
 
-            <div className="space-y-2 bg-accent/10 p-3 rounded-lg">
-              <p className="font-semibold">📊 จำนวนที่นั่ง (ตาม CSV):</p>
-              <ul className="list-disc list-inside pl-2 space-y-1">
-                <li><strong>แต่ละรอบใหญ่</strong> (เช้า/เที่ยง/เย็น): {CAPACITY_PER_TIME_SLOT} ที่/เรื่อง</li>
-                <li><strong>รวม {TOTAL_TIME_SLOTS} รอบต่อวัน</strong>: {CAPACITY_PER_DAY_PER_STORY} ที่/เรื่อง</li>
-                <li><strong>รวมทั้ง 2 เรื่อง</strong>: {TOTAL_CAPACITY_PER_DAY} ที่/วัน</li>
-              </ul>
-            </div>
-
             <div className="space-y-2">
               <p className="font-semibold">จำนวนที่นั่งแต่ละวัน:</p>
               <ul className="list-disc list-inside pl-2 space-y-1">
-                <li>29 ตุลาคม: {CAPACITY_PER_DAY_PER_STORY} ที่ต่อเรื่อง ({TOTAL_TIME_SLOTS} รอบ × {CAPACITY_PER_TIME_SLOT} ที่)</li>
-                <li>30 ตุลาคม: 231 ที่ต่อเรื่อง (มีพิธีเปิดงาน)</li>
-                <li>31 ตุลาคม: {CAPACITY_PER_DAY_PER_STORY} ที่ต่อเรื่อง ({TOTAL_TIME_SLOTS} รอบ × {CAPACITY_PER_TIME_SLOT} ที่)</li>
+                <li>29 ตุลาคม: 252 ที่ (36 รอบ)</li>
+                <li>30 ตุลาคม: 231 ที่ (33 รอบ - มีพิธีเปิดงาน)</li>
+                <li>31 ตุลาคม: 252 ที่ (36 รอบ)</li>
               </ul>
             </div>
 
