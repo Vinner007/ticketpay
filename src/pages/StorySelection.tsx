@@ -187,15 +187,15 @@ const StorySelection = () => {
                   </p>
                 </div>
 
-                {/* Stats Row - แก้ไข "ที่นั่ง" เป็น "คน" */}
+                {/* Stats Row */}
                 <div className="grid grid-cols-2 gap-3 py-3 border-y border-border">
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <div className="text-2xl font-bold text-primary">36</div>
-                    <div className="text-xs text-muted-foreground">รอบ/เรื่อง</div>
+                    <div className="text-2xl font-bold text-primary">108</div>
+                    <div className="text-xs text-muted-foreground">รอบ/เรื่อง (3 วัน)</div>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <div className="text-2xl font-bold text-secondary">252</div>
-                    <div className="text-xs text-muted-foreground">คน/เรื่อง</div>
+                    <div className="text-2xl font-bold text-secondary">756</div>
+                    <div className="text-xs text-muted-foreground">คน/เรื่อง (3 วัน)</div>
                   </div>
                 </div>
 
@@ -224,7 +224,7 @@ const StorySelection = () => {
 
         {/* Info Sections with Enhanced Design */}
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Main Stats with Halloween Theme - แก้ "ที่นั่ง" เป็น "คน" */}
+          {/* Main Stats with Halloween Theme */}
           <Card className="relative overflow-hidden p-8 bg-gradient-to-br from-card via-card to-primary/5 border-2 border-primary/30 shadow-2xl">
             <div className="absolute top-0 right-0 opacity-5">
               <Ghost className="h-64 w-64 text-primary" />
@@ -240,10 +240,10 @@ const StorySelection = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
                   <div className="relative text-center p-6 bg-card/50 backdrop-blur rounded-xl border-2 border-orange-500/30 hover:border-orange-500 transition-all duration-300 hover:scale-105">
                     <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-red-600 mb-2 animate-pulse-slow">
-                      72
+                      216
                     </div>
                     <p className="text-sm font-semibold mb-1">รอบรวมทั้ง 2 เรื่อง</p>
-                    <p className="text-xs text-muted-foreground">(36 รอบต่อเรื่อง)</p>
+                    <p className="text-xs text-muted-foreground">(108 รอบต่อเรื่อง × 3 วัน)</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -253,10 +253,10 @@ const StorySelection = () => {
                       className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-500 to-pink-600 mb-2 animate-pulse-slow"
                       style={{ animationDelay: "0.2s" }}
                     >
-                      504
+                      1,512
                     </div>
                     <p className="text-sm font-semibold mb-1">คนรวมทั้งหมด</p>
-                    <p className="text-xs text-muted-foreground">(252 คนต่อเรื่อง)</p>
+                    <p className="text-xs text-muted-foreground">(756 คนต่อเรื่อง × 2 เรื่อง)</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -266,10 +266,10 @@ const StorySelection = () => {
                       className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-green-500 to-emerald-600 mb-2 animate-pulse-slow"
                       style={{ animationDelay: "0.4s" }}
                     >
-                      5-7
+                      84
                     </div>
-                    <p className="text-sm font-semibold mb-1">คนต่อทีม</p>
-                    <p className="text-xs text-muted-foreground">(72 ทีมทั้งหมด)</p>
+                    <p className="text-sm font-semibold mb-1">คนต่อรอบ</p>
+                    <p className="text-xs text-muted-foreground">(3 รอบต่อวัน × 252 คน)</p>
                   </div>
                 </div>
               </div>
