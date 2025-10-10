@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
   Download,
@@ -9,6 +10,7 @@ import {
   Share2,
   CheckCircle,
   MapPin,
+  Clock,
 } from "lucide-react";
 import { Booking } from "@/types/booking";
 import { dateLabels } from "@/config/constants";
@@ -19,6 +21,27 @@ interface ConfirmationSuccessProps {
 
 export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
   const navigate = useNavigate();
+
+  // ข้อมูลเรื่อง
+  const storyInfo = {
+    'cursed-cinema': {
+      title: 'โรงหนังต้องสาป',
+      titleEn: 'The Cursed Cinema',
+      color: 'orange',
+      bgColor: 'bg-orange-500'
+    },
+    'lesson-blood': {
+      title: 'บทเรียนสีเลือด',
+      titleEn: 'The Lesson Blood',
+      color: 'purple',
+      bgColor: 'bg-purple-500'
+    }
+  }[booking.storyTheme] || {
+    title: 'โรงหนังต้องสาป',
+    titleEn: 'The Cursed Cinema',
+    color: 'orange',
+    bgColor: 'bg-orange-500'
+  };
 
   useEffect(() => {
     // Confetti animation
@@ -124,6 +147,16 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
             </div>
           </div>
 
+          {/* Story Theme Badge */}
+          <div className="text-center mb-4">
+            <Badge className={`text-lg px-6 py-2 ${storyInfo.bgColor} hover:${storyInfo.bgColor}/90 text-white font-bold`}>
+              🎭 {storyInfo.title}
+            </Badge>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              {storyInfo.titleEn}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted p-6 rounded-lg">
             <div>
               <div className="text-sm text-muted-foreground mb-1">วันที่งาน</div>
@@ -132,6 +165,13 @@ export const ConfirmationSuccess = ({ booking }: ConfirmationSuccessProps) => {
             <div>
               <div className="text-sm text-muted-foreground mb-1">เวลา</div>
               <div className="font-semibold">10:00 - 17:00 น.</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">ช่องทางเข้างาน</div>
+              <div className="font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                {booking.timeSlot} - {booking.timeSlotTime}
+              </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">สถานที่</div>
