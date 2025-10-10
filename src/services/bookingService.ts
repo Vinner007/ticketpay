@@ -85,6 +85,19 @@ export const bookingService = {
         }
       }
 
+      // 4. อัปเดต daily_summary เพื่อลด capacity
+      const { error: updateError } = await supabase.rpc('update_daily_capacity', {
+        p_event_date: bookingData.eventDate,
+        p_group_size: bookingData.groupSize,
+        p_is_cancelled: false
+      });
+
+      if (updateError) {
+        console.error('Failed to update daily capacity:', updateError);
+        // ไม่ rollback เพราะอาจเป็น warning แต่บันทึกไว้
+        console.warn('Booking created but capacity not updated');
+      }
+
       return { 
         success: true, 
         data: {
@@ -280,6 +293,16 @@ export const bookingService = {
    */
   async cancelBooking(bookingId: string) {
     try {
+      // 1. ดึงข้อมูลการจองก่อน
+      const { data: booking, error: fetchError } = await supabase
+        .from('bookings')
+        .select('event_date, group_size')
+        .eq('booking_id', bookingId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. อัปเดตสถานะการจอง
       const { data, error } = await supabase
         .from('bookings')
         .update({ 
@@ -291,6 +314,19 @@ export const bookingService = {
         .single();
 
       if (error) throw error;
+
+      // 3. คืน capacity ให้ daily_summary
+      if (booking) {
+        const { error: updateError } = await supabase.rpc('update_daily_capacity', {
+          p_event_date: booking.event_date,
+          p_group_size: booking.group_size,
+          p_is_cancelled: true
+        });
+
+        if (updateError) {
+          console.error('Failed to update daily capacity on cancel:', updateError);
+        }
+      }
 
       return { success: true, data };
     } catch (error: any) {
