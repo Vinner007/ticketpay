@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,8 @@ import { AnimatedBats } from "@/components/AnimatedBats";
 import { ArrowLeft, Star, Clock, Users, Calendar, Skull, Ghost, AlertTriangle, CheckCircle } from "lucide-react";
 import story1 from "@/assets/123799.jpg";
 import story2 from "@/assets/123800.jpg";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const stories = [
   {
@@ -41,12 +44,101 @@ const stories = [
   },
 ];
 
+interface DailySummary {
+  event_date: string;
+  available_capacity: number;
+  max_capacity: number;
+}
+
 const StorySelection = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedDate = searchParams.get("date");
+  const [dailySummary, setDailySummary] = useState<DailySummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ดึงข้อมูลที่นั่งของวันที่เลือก
+  useEffect(() => {
+    const fetchDailySummary = async () => {
+      if (!selectedDate) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('daily_summary')
+          .select('event_date, available_capacity, max_capacity')
+          .eq('event_date', selectedDate)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setDailySummary(data);
+        }
+      } catch (error) {
+        console.error('Error fetching daily summary:', error);
+        toast.error('ไม่สามารถโหลดข้อมูลที่นั่งได้');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDailySummary();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('daily_summary_story_selection')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'daily_summary',
+          filter: `event_date=eq.${selectedDate}`
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            setDailySummary(payload.new as DailySummary);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedDate]);
 
   const handleStorySelect = (storyId: string) => {
+    // เช็คที่นั่งก่อน
+    if (dailySummary && dailySummary.available_capacity === 0) {
+      toast.error("😢 ขออภัย วันนี้เต็มแล้ว กรุณาเลือกวันอื่น");
+      navigate('/');
+      return;
+    }
+
+    if (dailySummary && dailySummary.available_capacity < 7) {
+      toast.warning(`⚠️ เหลือที่นั่งเพียง ${dailySummary.available_capacity} ที่!`);
+    }
+
     localStorage.setItem("selectedStory", storyId);
-    navigate(`/select-date?story=${storyId}`);
+    navigate(`/booking?story=${storyId}&date=${selectedDate}`);
+  };
+
+  // แปลงวันที่เป็นภาษาไทย
+  const getDateLabel = (dateStr: string | null) => {
+    if (!dateStr) return "";
+    
+    const dateLabels: Record<string, string> = {
+      "2025-10-29": "29 ตุลาคม 2568 (วันพุธ)",
+      "2025-10-30": "30 ตุลาคม 2568 (วันพฤหัสบดี)",
+      "2025-10-31": "31 ตุลาคม 2568 (วันศุกร์)",
+    };
+    
+    return dateLabels[dateStr] || dateStr;
   };
 
   return (
@@ -80,6 +172,53 @@ const StorySelection = () => {
           <p className="text-lg md:text-xl text-muted-foreground">
             💀 เลือก 1 จาก 2 เรื่องราวสยองขวัญ แล้วเตรียมตัวให้พร้อม... 💀
           </p>
+          
+          {/* แสดงข้อมูลวันที่และที่นั่งที่เหลือ */}
+          {selectedDate && (
+            <Card className="inline-block px-6 py-4 bg-primary/10 border-2 border-primary">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">วันที่เลือก</p>
+                  <p className="text-lg font-bold text-primary">{getDateLabel(selectedDate)}</p>
+                </div>
+              </div>
+              {!isLoading && dailySummary && (
+                <div className="mt-3 pt-3 border-t border-primary/30">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-success" />
+                      <span className="text-sm text-muted-foreground">ที่นั่งเหลือ:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-2xl font-bold ${
+                        dailySummary.available_capacity === 0 
+                          ? 'text-destructive' 
+                          : dailySummary.available_capacity < 100 
+                            ? 'text-warning' 
+                            : 'text-success'
+                      }`}>
+                        {dailySummary.available_capacity}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/ {dailySummary.max_capacity} คน</span>
+                    </div>
+                  </div>
+                  {dailySummary.available_capacity < 100 && dailySummary.available_capacity > 0 && (
+                    <p className="text-xs text-warning text-center mt-2">⚠️ ที่นั่งใกล้เต็ม รีบจองเลย!</p>
+                  )}
+                  {dailySummary.available_capacity === 0 && (
+                    <p className="text-xs text-destructive text-center mt-2">❌ เต็มแล้ว กรุณาเลือกวันอื่น</p>
+                  )}
+                </div>
+              )}
+              {isLoading && (
+                <div className="mt-3 pt-3 border-t border-primary/30 text-center">
+                  <p className="text-xs text-muted-foreground">กำลังโหลดข้อมูลที่นั่ง...</p>
+                </div>
+              )}
+            </Card>
+          )}
+          
           <div className="inline-block px-4 py-2 bg-destructive/20 border border-destructive rounded-lg">
             <p className="text-sm text-destructive font-semibold">⚠️ ความน่ากลัวระดับสูง • ไม่เหมาะกับผู้มีโรคหัวใจ</p>
           </div>
