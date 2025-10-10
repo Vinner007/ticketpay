@@ -14,16 +14,295 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booking_date: string
+          booking_id: string
+          check_in_status: string
+          confirmation_code: string
+          created_at: string | null
+          event_date: string
+          group_size: number
+          id: string
+          payment_method: string
+          payment_status: string
+          promo_code: Json | null
+          qr_code_data: string
+          source: string
+          story_theme: string
+          subtotal: number
+          ticket_price: number
+          time_slot: string
+          time_slot_time: string
+          total_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          booking_id: string
+          check_in_status?: string
+          confirmation_code: string
+          created_at?: string | null
+          event_date: string
+          group_size: number
+          id?: string
+          payment_method: string
+          payment_status?: string
+          promo_code?: Json | null
+          qr_code_data: string
+          source?: string
+          story_theme: string
+          subtotal: number
+          ticket_price?: number
+          time_slot: string
+          time_slot_time: string
+          total_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          booking_id?: string
+          check_in_status?: string
+          confirmation_code?: string
+          created_at?: string | null
+          event_date?: string
+          group_size?: number
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          promo_code?: Json | null
+          qr_code_data?: string
+          source?: string
+          story_theme?: string
+          subtotal?: number
+          ticket_price?: number
+          time_slot?: string
+          time_slot_time?: string
+          total_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      daily_summary: {
+        Row: {
+          available_capacity: number | null
+          available_slots: number
+          booked_slots: number
+          created_at: string | null
+          current_bookings: number
+          event_date: string
+          id: string
+          max_capacity: number
+          total_slots: number
+          updated_at: string | null
+        }
+        Insert: {
+          available_capacity?: number | null
+          available_slots: number
+          booked_slots?: number
+          created_at?: string | null
+          current_bookings?: number
+          event_date: string
+          id?: string
+          max_capacity: number
+          total_slots: number
+          updated_at?: string | null
+        }
+        Update: {
+          available_capacity?: number | null
+          available_slots?: number
+          booked_slots?: number
+          created_at?: string | null
+          current_bookings?: number
+          event_date?: string
+          id?: string
+          max_capacity?: number
+          total_slots?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      leaders: {
+        Row: {
+          age: number
+          booking_id: string | null
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          line_id: string | null
+          nickname: string | null
+          phone: string
+        }
+        Insert: {
+          age: number
+          booking_id?: string | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          line_id?: string | null
+          nickname?: string | null
+          phone: string
+        }
+        Update: {
+          age?: number
+          booking_id?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          line_id?: string | null
+          nickname?: string | null
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          age: number
+          booking_id: string | null
+          created_at: string | null
+          first_name: string
+          id: string
+          last_name: string
+          member_id: number
+          nickname: string | null
+        }
+        Insert: {
+          age: number
+          booking_id?: string | null
+          created_at?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          member_id: number
+          nickname?: string | null
+        }
+        Update: {
+          age?: number
+          booking_id?: string | null
+          created_at?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          member_id?: number
+          nickname?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_slots: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          description: string | null
+          end_time: string
+          event_date: string
+          group_number: number
+          id: string
+          is_available: boolean | null
+          round_number: number
+          slot_number: number
+          slot_type: string | null
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          event_date: string
+          group_number: number
+          id?: string
+          is_available?: boolean | null
+          round_number: number
+          slot_number: number
+          slot_type?: string | null
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          event_date?: string
+          group_number?: number
+          id?: string
+          is_available?: boolean | null
+          round_number?: number
+          slot_number?: number
+          slot_type?: string | null
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      increment_promo_usage: {
+        Args: { promo_code: string }
+        Returns: undefined
+      }
+      is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      update_daily_capacity: {
+        Args: {
+          p_event_date: string
+          p_group_size: number
+          p_is_cancelled?: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "staff" | "viewer"
+      booking_source: "website" | "manual" | "import"
+      check_in_status: "checked-in" | "not-checked-in"
+      payment_method: "credit-card" | "promptpay" | "bank-transfer"
+      payment_status: "pending" | "completed" | "failed"
+      promo_type: "percentage" | "fixed"
+      story_theme: "cursed-cinema" | "lesson-blood"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +429,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "staff", "viewer"],
+      booking_source: ["website", "manual", "import"],
+      check_in_status: ["checked-in", "not-checked-in"],
+      payment_method: ["credit-card", "promptpay", "bank-transfer"],
+      payment_status: ["pending", "completed", "failed"],
+      promo_type: ["percentage", "fixed"],
+      story_theme: ["cursed-cinema", "lesson-blood"],
+    },
   },
 } as const
