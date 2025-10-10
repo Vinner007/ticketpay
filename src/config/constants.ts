@@ -2,9 +2,9 @@ export const TICKET_PRICE = 80;
 export const PAYMENT_TIME_LIMIT = 15 * 60;
 
 export const MAX_CAPACITY_PER_DAY: Record<string, number> = {
-  "2025-10-29": 252,
-  "2025-10-30": 231,
-  "2025-10-31": 252,
+  "2025-10-29": 504, // 2 เนื้อเรื่อง × 252 คน
+  "2025-10-30": 462, // 2 เนื้อเรื่อง × 231 คน
+  "2025-10-31": 504, // 2 เนื้อเรื่อง × 252 คน
 };
 
 export const PROMO_CODES = [
