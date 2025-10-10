@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { SpiderWeb } from "@/components/SpiderWeb";
 import { AnimatedBats } from "@/components/AnimatedBats";
 import { BookingProgress } from "@/components/BookingProgress";
@@ -81,6 +82,20 @@ const NewBooking = () => {
   const navigate = useNavigate();
   const selectedStory = searchParams.get("story") as "cursed-cinema" | "lesson-blood" || "cursed-cinema";
   const selectedDate = searchParams.get("date") || "2025-10-29";
+
+  // ข้อมูลเรื่อง
+  const storyInfo = {
+    'cursed-cinema': {
+      title: 'โรงหนังต้องสาป',
+      titleEn: 'The Cursed Cinema',
+      color: 'orange'
+    },
+    'lesson-blood': {
+      title: 'บทเรียนสีเลือด',
+      titleEn: 'The Lesson Blood',
+      color: 'purple'
+    }
+  }[selectedStory];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
@@ -683,6 +698,18 @@ const NewBooking = () => {
             </div>
 
             <div className="text-center mb-8 sm:mb-10 md:mb-12">
+              <div className="mb-4">
+                <Badge className={`text-lg px-4 py-2 ${
+                  storyInfo.color === 'orange' 
+                    ? 'bg-orange-500 hover:bg-orange-600' 
+                    : 'bg-purple-500 hover:bg-purple-600'
+                } text-white font-bold`}>
+                  🎭 {storyInfo.title}
+                </Badge>
+                <p className="text-sm text-muted-foreground mt-2 italic">
+                  {storyInfo.titleEn}
+                </p>
+              </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 text-primary text-glow-orange font-spooky leading-tight px-2">
                 จองตั๋วของคุณ
               </h1>

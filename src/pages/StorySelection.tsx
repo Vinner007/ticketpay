@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SpiderWeb } from "@/components/SpiderWeb";
 import { AnimatedBats } from "@/components/AnimatedBats";
 import { ArrowLeft, Star, Clock, Users, Calendar, Skull, Ghost, AlertTriangle, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import story1 from "@/assets/123799.jpg";
 import story2 from "@/assets/123800.jpg";
 
@@ -41,12 +44,134 @@ const stories = [
   },
 ];
 
+interface StoryCapacity {
+  storyId: string;
+  totalSlots: number;
+  bookedSlots: number;
+  availableSlots: number;
+  totalCapacity: number;
+  bookedCapacity: number;
+  availableCapacity: number;
+}
+
 const StorySelection = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedDate = searchParams.get("date") || "2025-10-29";
+  const [storyCapacities, setStoryCapacities] = useState<{ [key: string]: StoryCapacity }>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ฟังก์ชันดึงข้อมูลความจุแยกตามเรื่อง
+  const fetchStoryCapacities = async () => {
+    try {
+      setIsLoading(true);
+
+      // ดึงข้อมูลการจองแยกตามเรื่อง
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('story_theme, group_size')
+        .eq('event_date', selectedDate);
+
+      if (bookingsError) throw bookingsError;
+
+      // ดึงข้อมูล daily_summary
+      const { data: dailySummary, error: summaryError } = await supabase
+        .from('daily_summary')
+        .select('max_capacity, available_capacity, total_slots, booked_slots')
+        .eq('event_date', selectedDate)
+        .single();
+
+      if (summaryError) throw summaryError;
+
+      // คำนวณจำนวนที่จองแยกตามเรื่อง
+      const capacities: { [key: string]: StoryCapacity } = {
+        'cursed-cinema': {
+          storyId: 'cursed-cinema',
+          totalSlots: 0,
+          bookedSlots: 0,
+          availableSlots: 0,
+          totalCapacity: dailySummary?.max_capacity / 2 || 252,
+          bookedCapacity: 0,
+          availableCapacity: dailySummary?.max_capacity / 2 || 252,
+        },
+        'lesson-blood': {
+          storyId: 'lesson-blood',
+          totalSlots: 0,
+          bookedSlots: 0,
+          availableSlots: 0,
+          totalCapacity: dailySummary?.max_capacity / 2 || 252,
+          bookedCapacity: 0,
+          availableCapacity: dailySummary?.max_capacity / 2 || 252,
+        },
+      };
+
+      // นับจำนวนที่จองแต่ละเรื่อง
+      bookings?.forEach((booking) => {
+        const storyId = booking.story_theme;
+        if (capacities[storyId]) {
+          capacities[storyId].bookedCapacity += booking.group_size;
+          capacities[storyId].bookedSlots += 1;
+        }
+      });
+
+      // คำนวณที่ว่าง
+      Object.keys(capacities).forEach((storyId) => {
+        capacities[storyId].availableCapacity = 
+          capacities[storyId].totalCapacity - capacities[storyId].bookedCapacity;
+        capacities[storyId].totalSlots = dailySummary?.total_slots / 2 || 18;
+        capacities[storyId].availableSlots = 
+          capacities[storyId].totalSlots - capacities[storyId].bookedSlots;
+      });
+
+      setStoryCapacities(capacities);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching story capacities:', error);
+      toast.error('ไม่สามารถโหลดข้อมูลได้');
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStoryCapacities();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('story_capacity_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `event_date=eq.${selectedDate}`
+        },
+        () => {
+          console.log('🔔 Booking changed, refreshing capacities...');
+          fetchStoryCapacities();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedDate]);
 
   const handleStorySelect = (storyId: string) => {
+    const capacity = storyCapacities[storyId];
+    
+    if (capacity && capacity.availableCapacity <= 0) {
+      toast.error('😢 เรื่องนี้เต็มแล้ว! กรุณาเลือกเรื่องอื่นหรือวันอื่น');
+      return;
+    }
+
+    if (capacity && capacity.availableCapacity < 10) {
+      toast.warning(`⚠️ ที่นั่งเหลือน้อย! เหลือเพียง ${capacity.availableCapacity} ที่`);
+    }
+
     localStorage.setItem("selectedStory", storyId);
-    navigate(`/select-date?story=${storyId}`);
+    navigate(`/booking?story=${storyId}&date=${selectedDate}`);
   };
 
   return (
@@ -187,15 +312,47 @@ const StorySelection = () => {
                   </p>
                 </div>
 
-                {/* Stats Row */}
+                {/* Stats Row - Real-time Availability */}
                 <div className="grid grid-cols-2 gap-3 py-3 border-y border-border">
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <div className="text-2xl font-bold text-primary">108</div>
-                    <div className="text-xs text-muted-foreground">รอบ/เรื่อง (3 วัน)</div>
+                    {isLoading ? (
+                      <div className="text-2xl font-bold text-muted-foreground animate-pulse">...</div>
+                    ) : (
+                      <>
+                        <div className={`text-2xl font-bold ${
+                          storyCapacities[story.id]?.availableSlots > 5 
+                            ? 'text-green-500' 
+                            : storyCapacities[story.id]?.availableSlots > 0 
+                            ? 'text-yellow-500' 
+                            : 'text-red-500'
+                        }`}>
+                          {storyCapacities[story.id]?.availableSlots || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          รอบที่ว่าง / {storyCapacities[story.id]?.totalSlots || 18} รอบ
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <div className="text-2xl font-bold text-secondary">756</div>
-                    <div className="text-xs text-muted-foreground">คน/เรื่อง (3 วัน)</div>
+                    {isLoading ? (
+                      <div className="text-2xl font-bold text-muted-foreground animate-pulse">...</div>
+                    ) : (
+                      <>
+                        <div className={`text-2xl font-bold ${
+                          storyCapacities[story.id]?.availableCapacity > 50 
+                            ? story.color === "orange" ? 'text-orange-500' : 'text-purple-500'
+                            : storyCapacities[story.id]?.availableCapacity > 0 
+                            ? 'text-yellow-500' 
+                            : 'text-red-500'
+                        }`}>
+                          {storyCapacities[story.id]?.availableCapacity || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          ที่ว่าง / {storyCapacities[story.id]?.totalCapacity || 252} ที่
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
